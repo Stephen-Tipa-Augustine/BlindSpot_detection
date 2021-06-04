@@ -1,0 +1,132 @@
+#: import MyCamera camera.MyCamera
+#: import MyVideo video.MyVideo
+
+<MonitorScreen>:
+    canvas.before:
+        Color:
+            rgba: 0,0,0,.4
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        spacing: 2
+        padding: 2
+        MDBoxLayout:
+            orientation: 'horizontal'
+            padding: 2
+            spacing: 1
+            MDBoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: 1,0,0,.6
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                orientation: 'vertical'
+                padding: 2
+                size_hint_x: .3
+                MDLabel:
+                    text: 'Object detected:\n>None'
+                    valign: 'middle'
+                    halign: 'center'
+                    theme_text_color: 'Primary'
+                    text_color: 1,1,1,.5
+                MDLabel:
+                    text: "Object's Location:\n>None"
+                    valign: 'middle'
+                    halign: 'center'
+                    theme_text_color: 'Primary'
+                    text_color: 1,1,1,.5
+                MDLabel:
+                    text: 'Objects detected:\n>0'
+                    valign: 'middle'
+                    halign: 'center'
+                    theme_text_color: 'Primary'
+                    text_color: 1,1,1,.5
+            MyCamera:
+                canvas.before:
+                    Color:
+                        rgba: 0,1,0,.6
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                id: main_camera_focus
+
+            MDBoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: 1,0,0,.6
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                orientation: 'vertical'
+                padding: 2
+                size_hint_x: .3
+                MDLabel:
+                    text: 'System status:\n>None'
+                    valign: 'middle'
+                    halign: 'center'
+                    size_hint_y: .2
+                    theme_text_color: 'Primary'
+                    text_color: 1,1,1,.5
+                MDLabel:
+                    text: 'Focus: Rear Camera'
+                    valign: 'middle'
+                    halign: 'center'
+                    size_hint_y: .2
+                    theme_text_color: 'Primary'
+                    text_color: 1,1,1,.5
+                MDBoxLayout:
+                    size_hint_y: .2
+                    MDIconButton:
+                        icon: "volume-high"
+                        pos_hint: {'center_y': .5}
+                        # size_hint_x: .4
+                        on_press: self.icon = "volume-high" if self.icon == "volume-mute" else "volume-mute"
+                    MDLabel:
+                        text: 'Volume Control'
+                        theme_text_color: 'Hint'
+                        text_color: 1,1,1,.5
+                MDBoxLayout:
+                    MDLabel:
+                        text: '{} %'.format(volume_controller.value)
+                        size_hint_x: .7
+                        valign: 'middle'
+                        halign: 'right'
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        #pos_hint: {'left': 1}
+                        MDIconButton:
+                            icon: "volume-plus"
+                            pos_hint: {'center_x': .2}
+                            on_press: volume_controller.value +=  5
+                        # MDBoxLayout:
+                        MDSlider:
+                            id: volume_controller
+                            size_hint_y: .9
+                            min: 0
+                            max: 100
+                            value: 40
+                            step: 5
+                            pos_hint: {'center_x': .2}
+                            orientation: 'vertical'
+
+                        MDIconButton:
+                            icon: "volume-minus"
+                            pos_hint: {'center_x': .2}
+                            on_press: volume_controller.value -= 5
+
+        MDBoxLayout:
+            #adaptive_height: True
+            size_hint_y: .35
+            padding: 2
+            spacing: 1
+            MyCamera:
+                camera_name: 'Left'
+            MyCamera:
+                camera_name: 'Rear'
+            MyCamera:
+                camera_name: 'Right'
+
