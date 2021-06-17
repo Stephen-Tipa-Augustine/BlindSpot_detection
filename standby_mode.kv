@@ -1,0 +1,27 @@
+<StandbyMode>:
+    orientation: 'vertical'
+    MDLabel:
+        size_hint_y: .1
+        id: monitor_label
+        text: 'Standby Mode'
+        color: 1,1,1,1
+        font_size: 25
+        halign: 'center'
+        valign: 'center'
+    MDBoxLayout:
+        orientation: 'vertical'
+        Label:
+        MDIconButton:
+            icon: "lock-alert"
+            pos_hint: {'center_y': 1, 'center_x': .5}
+            user_font_size: "64sp"
+            theme_text_color: "Custom"
+            text_color: 1,0,0,.6
+        MDLabel:
+            text: 'System Currently Switched Off!'
+            valign: 'top'
+            halign: 'center'
+            font_size: 20
+            theme_text_color: 'Custom'
+            text_color: 1,.412,.706,1
+        Label:

@@ -1,17 +1,24 @@
-from kivy.uix.camera import Camera
 import threading
+
+from kivy.graphics.context_instructions import Color
+from kivy.graphics.vertex_instructions import Ellipse
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import ButtonBehavior
+from kivy.uix.anchorlayout import AnchorLayout
 import time
+
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.core.camera import Camera as CoreCamera
 from kivy.properties import NumericProperty, ListProperty, BooleanProperty, StringProperty
 
 # Camera handler
+from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.scatterlayout import ScatterLayout
+
 core_camera = None
 
 
-class MyCamera(BoxLayout, ButtonBehavior):
+class MyCamera(AnchorLayout):
     camera_name = StringProperty('')
     webcam_started = BooleanProperty(defaultvalue=False)
 
@@ -22,7 +29,6 @@ class MyCamera(BoxLayout, ButtonBehavior):
 
     def create_camera(self):
         self.camera = MyCamera2(resolution=(1920, 768), allow_stretch=True, size_hint=(1, 1))
-        self.camera.bind(on_press=self.switch_to_main)
         self.webcam_started = True
         self.add_widget(self.camera)
         self.play()
@@ -46,7 +52,7 @@ class MyCamera(BoxLayout, ButtonBehavior):
         print("Captured")
 
 
-class MyCamera2(Image, ButtonBehavior):
+class MyCamera2(Image):
     """Camera class. See module documentation for more information.
     """
 
@@ -83,6 +89,7 @@ class MyCamera2(Image, ButtonBehavior):
     to [-1, -1].
     '''
 
+
     def __init__(self, **kwargs):
         super(MyCamera2, self).__init__(**kwargs)  # `MyCamera2` instead of `Camera`
         self._camera = None
@@ -93,6 +100,7 @@ class MyCamera2(Image, ButtonBehavior):
         fbind('index', on_index)
         fbind('resolution', on_index)
         on_index()
+        # self.add_widget(Button(text='Click'))
 
     def on_tex(self, *l):
         self.canvas.ask_update()
