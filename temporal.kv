@@ -1,0 +1,64 @@
+<ActiveMode>:
+    orientation: 'vertical'
+    MDLabel:
+        size_hint_y: .1
+        id: monitor_label
+        text: 'Active Mode'
+        color: 1,1,1,1
+        font_size: 25
+        halign: 'center'
+        valign: 'center'
+    CanvasDrawing:
+        widget_width: self.width
+        widget_height: self.height
+        widget_center_x: self.center_x
+        widget_center_y: self.center_y
+        canvas.before:
+            Color:
+                id: boundary_color
+                rgba: .1, 1, .1, .9
+            Line:
+                dash_length: 1
+                dash_offset: 3
+                width: 2.
+                rectangle: (self.center_x - self.width*.2, self.center_y - self.height*.4, self.width*.4, self.height*.8)
+        canvas.after:
+            Color:
+                id: bus_color
+                rgba: 1, 1, 1, .9
+            Line:
+                width: 4.
+                rectangle: (self.center_x - self.width*.125, self.center_y - self.height*.3, self.width*.25, self.height*.6)
+        Label:
+            center: root.center
+            text: 'Bus'
+            font_size: 18
+
+        MDIconButton:
+            icon: "car"
+            # pos_hint: {'center_y': 1, 'center_x': .5}
+            center: root.center_x - root.width*.2, root.center_y - root.height*.4
+            user_font_size: "32sp"
+            theme_text_color: "Custom"
+            text_color: 1,0,0,.6
+
+        MDIconButton:
+            icon: "car"
+            center: root.center_x + root.width*.2, root.center_y - root.height*.4
+            user_font_size: "32sp"
+            theme_text_color: "Custom"
+            text_color: 1,0,0,.6
+
+        MDIconButton:
+            icon: "human-handsdown"
+            center: root.center_x - root.width*.25, root.center_y - root.height*.2
+            user_font_size: "32sp"
+            theme_text_color: "Custom"
+            text_color: 0,1,0,.6
+
+        MDIconButton:
+            icon: "bike-fast"
+            center: root.center_x + root.width*.1, root.center_y - root.height*.45
+            user_font_size: "32sp"
+            theme_text_color: "Custom"
+            text_color: 0,1,0,.6
