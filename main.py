@@ -1,4 +1,5 @@
-from kivy.graphics.vertex_instructions import Line, Rectangle
+# from kivy.graphics.vertex_instructions import Line, Rectangle
+from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
@@ -27,7 +28,7 @@ class StandbyMode(BoxLayout):
         self.monitor_screen = monitor_screen
 
 
-class MyRectangle(Widget):
+'''class MyRectangle(Widget):
     animate = BooleanProperty(False)
     pos_coord = ListProperty([0, 0])
     size_attributes = ListProperty([0, 0])
@@ -41,17 +42,15 @@ class MyRectangle(Widget):
             Color(.1, 1, .1, .9)
             Line(width=2,
                  rectangle=(
-                     self.pos_coord[0], self.pos_coord[1], self.size_attributes[0], self.size_attributes[1]))
+                     self.pos_coord[0], self.pos_coord[1], self.size_attributes[0], self.size_attributes[1]))'''
 
 
 class CanvasDrawing(Widget):
+    monitor_screen = ObjectProperty(None)
     widget_width = NumericProperty(0)
     widget_height = NumericProperty(0)
     widget_center_x = NumericProperty(0)
     widget_center_y = NumericProperty(0)
-    detected_objects = ListProperty(defaultvalue=[])
-    number_of_detected_objects = NumericProperty(defaultvalue=0)
-    position_of_detected_objects = ListProperty(defaultvalue=[])
 
     # Mapping parameters
     bus_top = NumericProperty(0)
@@ -63,6 +62,18 @@ class CanvasDrawing(Widget):
     boundary_bottom = NumericProperty(0)
     boundary_right = NumericProperty(0)
 
+    # object coordinates
+    bottom_coord_in = ListProperty([])
+    top_coord_in = ListProperty([])
+    right_coord_in = ListProperty([])
+    left_coord_in = ListProperty([])
+    bottom_coord_out = ListProperty([])
+    top_coord_out = ListProperty([])
+    right_coord_out = ListProperty([])
+    left_coord_out = ListProperty([])
+    danger_coord = ListProperty([])
+    safe_coord = ListProperty([])
+
     dy = NumericProperty(0)
     dx = NumericProperty(0)
     object_size = NumericProperty(55.0)
@@ -73,6 +84,7 @@ class CanvasDrawing(Widget):
         self.pos_factors_x = [.1, .2, .25, .3]
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
+        # self.create_coord()
         # self.timer = 0
         # self.add_object_now = False
         # self.draw_rec()
@@ -81,14 +93,58 @@ class CanvasDrawing(Widget):
         # anim.repeat = True
         # anim.start
 
+    def create_coord(self):
+        # Coordinates in the danger region
+        vert_points_entire = [i for i in range(round(self.boundary_bottom) + 20, round(self.boundary_top), 60) if
+                              self.boundary_top - i >= 60]
+        hor_points_entire = [i for i in range(round(self.boundary_left) + 60, round(self.boundary_right), 60) if
+                             self.boundary_right - i >= 5]
+        top_vert_points = [i for i in range(round(self.boundary_top) - 60, round(self.bus_top), -60) if
+                           i - self.bus_top >= 5]
+        bottom_vert_points = [i for i in vert_points_entire if i <= self.bus_bottom]
+        bus_width_hor_points = [i for i in hor_points_entire if self.bus_left < i < self.bus_right]
+        left_hor_points = [i for i in hor_points_entire if i <= self.bus_left]
+        right_hor_points = [i for i in range(round(self.boundary_right) - 2, round(self.bus_right), -60) if
+                            i - self.bus_right >= 60]
+        self.left_coord_in = [(i, j) for i in left_hor_points for j in vert_points_entire]
+        self.right_coord_in = [(i, j) for i in right_hor_points for j in vert_points_entire]
+        self.top_coord_in = [(i, j) for i in bus_width_hor_points for j in top_vert_points]
+        self.bottom_coord_in = [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
+
+        # Coordinates in the safe region
+        vert_points_entire = [i for i in range(round(self.top - self.widget_height) + 20, round(self.top), 60) if
+                              self.top - i >= 60]
+        hor_points_entire = [i for i in range(round(self.right - self.widget_width) + 60, round(self.right), 60) if
+                             self.right - i >= 20]
+        top_vert_points = [i for i in range(round(self.top) - 60, round(self.boundary_top), -60) if
+                           i - self.boundary_top >= 10]
+        bottom_vert_points = [i for i in vert_points_entire if i <= self.boundary_bottom]
+        bus_width_hor_points = [i for i in hor_points_entire if self.boundary_left < i < self.boundary_right]
+        left_hor_points = [i for i in hor_points_entire if i <= self.boundary_left]
+        right_hor_points = [i for i in range(round(self.right) - 10, round(self.boundary_right), -60) if
+                            i - self.boundary_right >= 60]
+        self.left_coord_out = [(i, j) for i in left_hor_points for j in vert_points_entire]
+        self.right_coord_out = [(i, j) for i in right_hor_points for j in vert_points_entire]
+        self.top_coord_out = [(i, j) for i in bus_width_hor_points for j in top_vert_points]
+        self.bottom_coord_out = [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
+
+        self.danger_coord = [j for i in
+                             (self.left_coord_in, self.right_coord_in, self.top_coord_in, self.bottom_coord_in) for j in
+                             i]
+        self.safe_coord = [j for i in
+                           (self.left_coord_out, self.right_coord_out, self.top_coord_out, self.bottom_coord_out) for
+                           j in i]
+
     def update_canvas(self, *args):
-        if self.number_of_detected_objects % 2 == 0:
-            self.add_object(kind='car', pos_factor=1, color=random.choice(self.colors))
+        if len(self.safe_coord) == 0:
+            self.create_coord()
+
+        if self.monitor_screen.number_of_detected_objects % 2 == 0:
+            self.add_object(kind='car', pos_factor=1, color=self.colors[0])
         else:
             self.add_object(kind='car',
                             pos_factor=(random.choice(self.pos_factors_x), random.choice(self.pos_factors_y)),
-                            color=random.choice(self.colors))
-        print('Changes in x and y: ', self.dx, self.dy)
+                            color=self.colors[1])
 
     def add_object(self, kind, pos_factor, color):
         """
@@ -98,35 +154,20 @@ class CanvasDrawing(Widget):
         :return:
         """
         if pos_factor == 1:
-            center = self.widget_center_x, self.bus_bottom
+            coord = random.choice(self.safe_coord)
+            center = coord
         else:
-            center = self.widget_center_x - self.widget_width * pos_factor[0], self.widget_center_y - \
-                     self.widget_height * pos_factor[1]
+            center = random.choice(self.danger_coord)
         obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom", text_color=color)
-        self.detected_objects.append(obj)
-        self.number_of_detected_objects += 1
+
+        if kind not in self.monitor_screen.detected_objects:
+            self.monitor_screen.detected_objects.append(kind)
+        self.monitor_screen.number_of_detected_objects += 1
         self.add_widget(obj)
-
-    def print_parameters(self, *args):
-        with self.canvas.after:
-            Color(1, 0, 0, .9)
-            Line(width=5,
-                 rectangle=(
-                     self.widget_center_x - self.widget_width * .125, self.widget_center_y - self.widget_height * .3,
-                     self.widget_width * .25, self.widget_height * .6))
-        print('width: {}, height: {}, center_x: {}, center_y: {}'.format(self.widget_width, self.widget_height,
-                                                                         self.widget_center_x, self.widget_center_y))
-
-    def draw_rec(self):
-        with self.canvas.after:
-            Color(1, 1, 0, .9)
-            Line(width=2,
-                 rectangle=(
-                     self.widget_center_x - self.widget_width * .125, self.widget_center_y - self.widget_height * .3,
-                     self.widget_width * .25, self.widget_height * .6))
 
 
 class ActiveMode(BoxLayout):
+    monitor_screen = ObjectProperty(None)
 
     def __init__(self, monitor_screen=None, **kwargs):
         super(ActiveMode, self).__init__(**kwargs)
@@ -140,7 +181,6 @@ class SplashScreen(BoxLayout):
 
     def __init__(self, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
-
         Clock.schedule_interval(self.update_progress_bar, .2)
 
     def update_progress_bar(self, *args):
@@ -201,6 +241,10 @@ class BSDSApp(MDApp):
         SplashScreen.resize_window(400, 300)
         Window.borderless = True
         Window.allow_screensaver = True
+
+        screen = Builder.load_file('BSDS.kv')
+
+        return screen
 
 
 if __name__ == '__main__':

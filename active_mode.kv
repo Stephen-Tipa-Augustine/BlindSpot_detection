@@ -9,6 +9,7 @@
         halign: 'center'
         valign: 'center'
     CanvasDrawing:
+        id: graphics_canvas
         widget_width: self.width
         widget_height: self.height + monitor_label.height
         widget_center_x: self.center_x
@@ -21,9 +22,10 @@
         boundary_left: self.center_x - self.width*.2
         boundary_bottom: self.center_y - self.height*.4
         boundary_right: self.center_x + self.width*.2
-        dy: self.height*.1
-        dx: self.width*.075
+        dy: self.height*.1*.5
+        dx: self.width*.075*.5
         top_offset: monitor_label.height
+        monitor_screen: root.monitor_screen
         canvas.before:
             Color:
                 id: boundary_color
