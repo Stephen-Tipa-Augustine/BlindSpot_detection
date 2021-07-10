@@ -1,4 +1,3 @@
-# from kivy.graphics.vertex_instructions import Line, Rectangle
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
@@ -26,23 +25,6 @@ class StandbyMode(BoxLayout):
     def __init__(self, monitor_screen=None, **kwargs):
         super(StandbyMode, self).__init__(**kwargs)
         self.monitor_screen = monitor_screen
-
-
-'''class MyRectangle(Widget):
-    animate = BooleanProperty(False)
-    pos_coord = ListProperty([0, 0])
-    size_attributes = ListProperty([0, 0])
-
-    def __init__(self, **kwargs):
-        super(MyRectangle, self).__init__(**kwargs)
-        self.draw_rec()
-
-    def draw_rec(self):
-        with self.canvas:
-            Color(.1, 1, .1, .9)
-            Line(width=2,
-                 rectangle=(
-                     self.pos_coord[0], self.pos_coord[1], self.size_attributes[0], self.size_attributes[1]))'''
 
 
 class CanvasDrawing(Widget):
@@ -84,6 +66,7 @@ class CanvasDrawing(Widget):
         self.pos_factors_x = [.1, .2, .25, .3]
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
+        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human', 'bike-fast': 'Unknown'}
         # self.create_coord()
         # self.timer = 0
         # self.add_object_now = False
@@ -93,40 +76,57 @@ class CanvasDrawing(Widget):
         # anim.repeat = True
         # anim.start
 
+    def blink_led(self):
+        pass
+
+    def auditory_feedback(self):
+        pass
+
+    def _generate_coord(self, inner=True):
+        if inner:
+            boundary_top = self.boundary_top
+            boundary_bottom = self.boundary_bottom
+            boundary_left = self.boundary_left
+            boundary_right = self.boundary_right
+            inner_top = self.bus_top
+            inner_right = self.bus_right
+            inner_bottom = self.bus_bottom
+            inner_left = self.bus_left
+        else:
+            boundary_top = self.top
+            boundary_bottom = self.top - self.widget_height
+            boundary_left = self.right - self.widget_width
+            boundary_right = self.right
+            inner_top = self.boundary_top
+            inner_right = self.boundary_right
+            inner_bottom = self.boundary_bottom
+            inner_left = self.boundary_left
+        vert_points_entire = [i for i in range(round(boundary_bottom) + 60, round(boundary_top), 60) if
+                              boundary_top - i >= 60]
+        hor_points_entire = [i for i in range(round(boundary_left) + 60, round(boundary_right), 60) if
+                             boundary_right - i >= 5]
+        top_vert_points = [i for i in range(round(inner_top) + 60, round(boundary_top), 60) if
+                           boundary_top - i >= 5]
+        bottom_vert_points = [i for i in vert_points_entire if i <= inner_bottom]
+        bus_width_hor_points = [i for i in hor_points_entire if inner_left < i < inner_right]
+        left_hor_points = [i for i in hor_points_entire if i <= inner_left]
+        right_hor_points = [i for i in range(round(boundary_right) - 5, round(inner_right), -60) if
+                            i - inner_right >= 60]
+        return [(i, j) for i in left_hor_points for j in vert_points_entire],\
+               [(i, j) for i in bus_width_hor_points for j in top_vert_points],\
+               [(i, j) for i in right_hor_points for j in vert_points_entire],\
+               [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
+
+
     def create_coord(self):
         # Coordinates in the danger region
-        vert_points_entire = [i for i in range(round(self.boundary_bottom) + 20, round(self.boundary_top), 60) if
-                              self.boundary_top - i >= 60]
-        hor_points_entire = [i for i in range(round(self.boundary_left) + 60, round(self.boundary_right), 60) if
-                             self.boundary_right - i >= 5]
-        top_vert_points = [i for i in range(round(self.boundary_top) - 60, round(self.bus_top), -60) if
-                           i - self.bus_top >= 5]
-        bottom_vert_points = [i for i in vert_points_entire if i <= self.bus_bottom]
-        bus_width_hor_points = [i for i in hor_points_entire if self.bus_left < i < self.bus_right]
-        left_hor_points = [i for i in hor_points_entire if i <= self.bus_left]
-        right_hor_points = [i for i in range(round(self.boundary_right) - 2, round(self.bus_right), -60) if
-                            i - self.bus_right >= 60]
-        self.left_coord_in = [(i, j) for i in left_hor_points for j in vert_points_entire]
-        self.right_coord_in = [(i, j) for i in right_hor_points for j in vert_points_entire]
-        self.top_coord_in = [(i, j) for i in bus_width_hor_points for j in top_vert_points]
-        self.bottom_coord_in = [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
+        print('dy: ', self.dy)
+        print('dx: ', self.dx)
+        self.left_coord_in, self.top_coord_in, self.right_coord_in, self.bottom_coord_in = self._generate_coord(True)
 
         # Coordinates in the safe region
-        vert_points_entire = [i for i in range(round(self.top - self.widget_height) + 20, round(self.top), 60) if
-                              self.top - i >= 60]
-        hor_points_entire = [i for i in range(round(self.right - self.widget_width) + 60, round(self.right), 60) if
-                             self.right - i >= 20]
-        top_vert_points = [i for i in range(round(self.top) - 60, round(self.boundary_top), -60) if
-                           i - self.boundary_top >= 10]
-        bottom_vert_points = [i for i in vert_points_entire if i <= self.boundary_bottom]
-        bus_width_hor_points = [i for i in hor_points_entire if self.boundary_left < i < self.boundary_right]
-        left_hor_points = [i for i in hor_points_entire if i <= self.boundary_left]
-        right_hor_points = [i for i in range(round(self.right) - 10, round(self.boundary_right), -60) if
-                            i - self.boundary_right >= 60]
-        self.left_coord_out = [(i, j) for i in left_hor_points for j in vert_points_entire]
-        self.right_coord_out = [(i, j) for i in right_hor_points for j in vert_points_entire]
-        self.top_coord_out = [(i, j) for i in bus_width_hor_points for j in top_vert_points]
-        self.bottom_coord_out = [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
+        self.left_coord_out, self.top_coord_out, self.right_coord_out, self.bottom_coord_out =\
+            self._generate_coord(False)
 
         self.danger_coord = [j for i in
                              (self.left_coord_in, self.right_coord_in, self.top_coord_in, self.bottom_coord_in) for j in
@@ -140,11 +140,11 @@ class CanvasDrawing(Widget):
             self.create_coord()
 
         if self.monitor_screen.number_of_detected_objects % 2 == 0:
-            self.add_object(kind='car', pos_factor=1, color=self.colors[0])
+            self.add_object(kind='car', pos_factor=1, color=self.colors[1])
         else:
             self.add_object(kind='car',
                             pos_factor=(random.choice(self.pos_factors_x), random.choice(self.pos_factors_y)),
-                            color=self.colors[1])
+                            color=self.colors[0])
 
     def add_object(self, kind, pos_factor, color):
         """
@@ -160,8 +160,8 @@ class CanvasDrawing(Widget):
             center = random.choice(self.danger_coord)
         obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom", text_color=color)
 
-        if kind not in self.monitor_screen.detected_objects:
-            self.monitor_screen.detected_objects.append(kind)
+        if self.object_kind[kind] not in self.monitor_screen.detected_objects:
+            self.monitor_screen.detected_objects.append(self.object_kind[kind])
         self.monitor_screen.number_of_detected_objects += 1
         self.add_widget(obj)
 

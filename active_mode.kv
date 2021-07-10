@@ -11,19 +11,19 @@
     CanvasDrawing:
         id: graphics_canvas
         widget_width: self.width
-        widget_height: self.height + monitor_label.height
+        widget_height: self.height
         widget_center_x: self.center_x
-        widget_center_y: self.center_y + monitor_label.height
-        bus_top: self.center_y + self.height*.3 + monitor_label.height
-        bus_left: self.center_x - self.width*.125
-        bus_bottom: self.center_y - self.height*.3
-        bus_right: self.center_x + self.width*.125
-        boundary_top: self.center_y + self.height*.4 + monitor_label.height
+        widget_center_y: self.center_y
+        bus_top: self.center_y + self.height*.4 - 70
+        bus_left: self.center_x - self.width*.2 + 70
+        bus_bottom: self.center_y - self.height*.4 + 70
+        bus_right: self.center_x + self.width*.2 - 70
+        boundary_top: self.center_y + self.height*.4
         boundary_left: self.center_x - self.width*.2
         boundary_bottom: self.center_y - self.height*.4
         boundary_right: self.center_x + self.width*.2
-        dy: self.height*.1*.5
-        dx: self.width*.075*.5
+        dy: 80
+        dx: 80
         top_offset: monitor_label.height
         monitor_screen: root.monitor_screen
         canvas.before:
@@ -41,7 +41,7 @@
                 rgba: 1, 1, 1, .9
             Line:
                 width: 4.
-                rectangle: (self.center_x - self.width*.125, self.center_y - self.height*.3, self.width*.25, self.height*.6)
+                rectangle: (self.center_x - self.width*.2 + 70, self.center_y - self.height*.4 + 70, self.width*.4 - 140, self.height*.8 - 140)
         Label:
             center: root.center
             text: 'Bus'
