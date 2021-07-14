@@ -67,19 +67,34 @@ class CanvasDrawing(Widget):
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
         self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human', 'bike-fast': 'Unknown'}
-        # self.create_coord()
-        # self.timer = 0
-        # self.add_object_now = False
-        # self.draw_rec()
         Clock.schedule_interval(self.update_canvas, timeout=10)
+        Clock.schedule_interval(self._blink_right_led, timeout=.5)
+        Clock.schedule_interval(self._blink_left_led, timeout=.5)
         # anim = Animation(rgba=(1, 0, 0, 1)) + Animation(rgba=(0, 1, 0, 1)) + Animation(rgba=(0, 0, 1, 1))
         # anim.repeat = True
         # anim.start
 
-    def blink_led(self):
-        pass
+    def blink_led(self, *args):
+        Clock.schedule_interval(self._blink_right_led, timeout=.5)
+        Clock.schedule_interval(self._blink_left_led, timeout=.5)
 
-    def auditory_feedback(self):
+    def _blink_left_led(self, dt):
+        if not self.monitor_screen.system_status:
+            return False
+        if self.monitor_screen is None:
+            return
+        if 'Left' in self.monitor_screen.position_of_detected_objects:
+            print('blinking left LED')
+
+    def _blink_right_led(self, dt):
+        if not self.monitor_screen.system_status:
+            return False
+        if self.monitor_screen is None:
+            return
+        if 'Right' in self.monitor_screen.position_of_detected_objects:
+            print('blinking right LED')
+
+    def auditory_feedback(self, *args):
         pass
 
     def _generate_coord(self, inner=True):
@@ -112,20 +127,17 @@ class CanvasDrawing(Widget):
         left_hor_points = [i for i in hor_points_entire if i <= inner_left]
         right_hor_points = [i for i in range(round(boundary_right) - 5, round(inner_right), -60) if
                             i - inner_right >= 60]
-        return [(i, j) for i in left_hor_points for j in vert_points_entire],\
-               [(i, j) for i in bus_width_hor_points for j in top_vert_points],\
-               [(i, j) for i in right_hor_points for j in vert_points_entire],\
+        return [(i, j) for i in left_hor_points for j in vert_points_entire], \
+               [(i, j) for i in bus_width_hor_points for j in top_vert_points], \
+               [(i, j) for i in right_hor_points for j in vert_points_entire], \
                [(i, j) for i in bus_width_hor_points for j in bottom_vert_points]
-
 
     def create_coord(self):
         # Coordinates in the danger region
-        print('dy: ', self.dy)
-        print('dx: ', self.dx)
         self.left_coord_in, self.top_coord_in, self.right_coord_in, self.bottom_coord_in = self._generate_coord(True)
 
         # Coordinates in the safe region
-        self.left_coord_out, self.top_coord_out, self.right_coord_out, self.bottom_coord_out =\
+        self.left_coord_out, self.top_coord_out, self.right_coord_out, self.bottom_coord_out = \
             self._generate_coord(False)
 
         self.danger_coord = [j for i in
@@ -136,6 +148,8 @@ class CanvasDrawing(Widget):
                            j in i]
 
     def update_canvas(self, *args):
+        if not self.monitor_screen.system_status:
+            return False
         if len(self.safe_coord) == 0:
             self.create_coord()
 
@@ -162,8 +176,27 @@ class CanvasDrawing(Widget):
 
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
             self.monitor_screen.detected_objects.append(self.object_kind[kind])
+
+        object_location = self.get_object_location(center)
+        if object_location not in self.monitor_screen.position_of_detected_objects:
+            self.monitor_screen.position_of_detected_objects.append(object_location)
+
         self.monitor_screen.number_of_detected_objects += 1
         self.add_widget(obj)
+
+    def get_object_location(self, coord):
+        if coord in self.left_coord_in or coord in self.left_coord_out:
+            location = 'Left'
+        elif coord in self.top_coord_in or coord in self.top_coord_out:
+            location = 'Top'
+        elif coord in self.right_coord_in or coord in self.right_coord_out:
+            location = 'Right'
+        elif coord in self.bottom_coord_in or coord in self.bottom_coord_out:
+            location = 'Bottom'
+        else:
+            location = 'Unknown'
+        return location
+
 
 
 class ActiveMode(BoxLayout):
@@ -242,7 +275,7 @@ class BSDSApp(MDApp):
         Window.borderless = True
         Window.allow_screensaver = True
 
-        screen = Builder.load_file('BSDS.kv')
+        screen = Builder.load_file('root.kv')
 
         return screen
 
