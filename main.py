@@ -12,6 +12,9 @@ from kivy.graphics import Color, Canvas
 from kivy.uix.widget import Widget
 from kivymd.uix.button import MDIconButton
 import random
+from BSDS_firmware.blink_led import BlinkLED
+from BSDS_firmware.ultrasonic import UltrasonicSensor
+from BSDS_firmware.accelerometer import Accelerometer
 
 
 class BlindSpotObject(MDIconButton):
@@ -66,7 +69,11 @@ class CanvasDrawing(Widget):
         self.pos_factors_x = [.1, .2, .25, .3]
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
-        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human', 'bike-fast': 'Unknown'}
+        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human',
+                            'shield-alert-outline': 'Unknown'}
+        self.left_led = None
+        self.right_led = None
+        self.danger_zone_positions = []
         Clock.schedule_interval(self.update_canvas, timeout=10)
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
@@ -83,16 +90,30 @@ class CanvasDrawing(Widget):
             return False
         if self.monitor_screen is None:
             return
-        if 'Left' in self.monitor_screen.position_of_detected_objects:
-            print('blinking left LED')
+        if 'Left' in self.danger_zone_positions:
+            print('Blinking left LED')
+            try:
+                self.left_led = BlinkLED()
+                self.left_led.run()
+            except ImportError:
+                print('Failed to import modules')
+        elif self.left_led is not None and 'Left' not in self.danger_zone_positions:
+            self.left_led.stop()
 
     def _blink_right_led(self, dt):
         if not self.monitor_screen.system_status:
             return False
         if self.monitor_screen is None:
             return
-        if 'Right' in self.monitor_screen.position_of_detected_objects:
-            print('blinking right LED')
+        if 'Right' in self.danger_zone_positions:
+            print('Blinking right LED')
+            try:
+                self.right_led = BlinkLED()
+                self.right_led.run()
+            except ImportError:
+                print('Failed to import modules')
+        elif self.right_led is not None and 'Right' not in self.danger_zone_positions:
+            self.right_led.stop()
 
     def auditory_feedback(self, *args):
         pass
@@ -164,7 +185,7 @@ class CanvasDrawing(Widget):
         """
         :param color: a tuple of the color proportions
         :param pos_factor: a numeric value used for computing the position
-        :param kind: string options, one of ['car', 'motorbike', 'human-handsdown', 'bike-fast']
+        :param kind: string options, one of ['car', 'motorbike', 'human-handsdown', 'bike-fast', 'shield-alert-outline']
         :return:
         """
         if pos_factor == 1:
@@ -177,9 +198,11 @@ class CanvasDrawing(Widget):
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
             self.monitor_screen.detected_objects.append(self.object_kind[kind])
 
-        object_location = self.get_object_location(center)
-        if object_location not in self.monitor_screen.position_of_detected_objects:
-            self.monitor_screen.position_of_detected_objects.append(object_location)
+        object_info = self.get_object_location(center)
+        if object_info['location'] not in self.monitor_screen.position_of_detected_objects:
+            self.monitor_screen.position_of_detected_objects.append(object_info['location'])
+            if object_info['in-danger-zone']:
+                self.danger_zone_positions.append(object_info['location'])
 
         self.monitor_screen.number_of_detected_objects += 1
         self.add_widget(obj)
@@ -195,8 +218,8 @@ class CanvasDrawing(Widget):
             location = 'Bottom'
         else:
             location = 'Unknown'
-        return location
-
+        in_danger_zone = True if coord in self.danger_coord else False
+        return {'location': location, 'in-danger-zone': in_danger_zone}
 
 
 class ActiveMode(BoxLayout):

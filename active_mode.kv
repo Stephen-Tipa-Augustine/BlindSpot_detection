@@ -29,12 +29,16 @@
         canvas.before:
             Color:
                 id: boundary_color
-                rgba: .1, 1, .1, .9
-            Line:
-                dash_length: 1
-                dash_offset: 3
-                width: 2.
-                rectangle: (self.center_x - self.width*.2, self.center_y - self.height*.4, self.width*.4, self.height*.8)
+                rgba: 0, 1, 0, 1
+            Rectangle:
+                source: "boundary.png"
+                pos: self.center_x - self.width*.2, self.center_y - self.height*.4
+                size: self.width*.4, self.height*.8
+            #Line:
+            #   dash_length: 1
+            #    dash_offset: 10
+            #    width: 2
+            #    rectangle: (self.center_x - self.width*.2, self.center_y - self.height*.4, self.width*.4, self.height*.8)
         canvas.after:
             Color:
                 id: bus_color
