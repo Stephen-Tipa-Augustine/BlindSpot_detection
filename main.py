@@ -82,8 +82,8 @@ class CanvasDrawing(Widget):
         # anim.start
 
     def blink_led(self, *args):
-        Clock.schedule_interval(self._blink_right_led, timeout=.5)
-        Clock.schedule_interval(self._blink_left_led, timeout=.5)
+        Clock.schedule_interval(self._blink_right_led, timeout=2)
+        Clock.schedule_interval(self._blink_left_led, timeout=2)
 
     def _blink_left_led(self, dt):
         if not self.monitor_screen.system_status:
@@ -94,7 +94,7 @@ class CanvasDrawing(Widget):
             print('Blinking left LED')
             try:
                 self.left_led = BlinkLED()
-                self.left_led.run()
+                self.left_led.run(delay=2)
             except ImportError:
                 print('Failed to import modules')
         elif self.left_led is not None and 'Left' not in self.danger_zone_positions:
@@ -109,7 +109,7 @@ class CanvasDrawing(Widget):
             print('Blinking right LED')
             try:
                 self.right_led = BlinkLED()
-                self.right_led.run()
+                self.right_led.run(delay=2)
             except ImportError:
                 print('Failed to import modules')
         elif self.right_led is not None and 'Right' not in self.danger_zone_positions:
