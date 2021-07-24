@@ -276,6 +276,13 @@ class MonitorScreen(ScrollView):
 
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
+        self.moving = False
+        # initialize accelerometer "MPU6050"
+        self.accel_obj = Accelerometer()
+        Clock.schedule_interval(self.detected_objects, 5)
+
+    def detect_motion(self, dt):
+        self.moving = self.accel_obj.moving or self.accel_obj.rotating
 
     def switch_view(self, switch):
         container = self.ids.monitor_body
