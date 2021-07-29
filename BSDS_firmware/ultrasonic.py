@@ -1,6 +1,9 @@
 # Libraries
+import threading
+
 import RPi.GPIO as GPIO
 import time
+from .helpers import ThreadManager
 
 
 class UltrasonicSensor:
@@ -20,36 +23,36 @@ class UltrasonicSensor:
     def compute_distance(self):
         # set Trigger to HIGH
         GPIO.output(self.GPIO_TRIGGER, True)
-
         # set Trigger after 0.01ms to LOW
         time.sleep(0.00001)
         GPIO.output(self.GPIO_TRIGGER, False)
-
         start_time = time.time()
         stop_time = time.time()
-
         # save StartTime
         while GPIO.input(self.GPIO_ECHO) == 0:
             start_time = time.time()
         # save time of arrival
         while GPIO.input(self.GPIO_ECHO) == 1:
             stop_time = time.time()
-
         # time difference between start and arrival
         t = stop_time - start_time
         # multiply with the sonic speed (34300 cm/s)
         # and divide by 2, because there and back
-
         return "%.1f" % ((t * 34300) / 2)
 
     @staticmethod
-    def clean_up(self):
+    def clean_up():
         GPIO.cleanup()
 
     def run(self):
-        while self.running:
-            print("Measured Distance = %f cm" % self.compute_distance())
-            time.sleep(1)
+        m = ThreadManager()
+        t = threading.Thread(target=lambda q: q.put(self.compute_distance()), args=(m.que, ))
+        t.start()
+        m.add_thread(t)
+        m.join_threads()
+        distance = m.check_for_return_value()
+        # print("Measured Distance = %f cm" % distance)
+        return distance
 
     def stop(self):
         self.running = False

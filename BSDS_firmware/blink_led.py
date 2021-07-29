@@ -9,7 +9,6 @@ class BlinkLED:
         # GPIO Mode (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
-
         # set GPIO Pins
         self.GPIO_LED = 25
 
@@ -25,7 +24,7 @@ class BlinkLED:
         time.sleep(delay)
 
     @staticmethod
-    def clean_up(self):
+    def clean_up():
         GPIO.cleanup()
 
     def run(self, delay=2):
