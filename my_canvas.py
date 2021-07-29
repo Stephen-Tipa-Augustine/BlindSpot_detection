@@ -80,9 +80,9 @@ class CanvasDrawing(Widget):
         # anim.start
 
     def initialize_sensors(self):
-        self.left_led = BlinkLED()
-        self.right_led = BlinkLED()
         self.distant_manager = DistantManager()
+        # self.left_led = BlinkLED()
+        # self.right_led = BlinkLED()
 
     def blink_led(self, *args):
         Clock.schedule_interval(self._blink_right_led, timeout=2)
@@ -122,21 +122,37 @@ class CanvasDrawing(Widget):
     def _coord_mapper(self, data):
         point = None
         for i in data:
-            if data[i] is not None:
+            if data[i]:
                 if i == 'left':
-                    if self.is_another_object(self.left_sensor_value[0], data['left'][0]):
+                    if self.left_sensor_value:
+                        if self.is_another_object(self.left_sensor_value[0], data['left'][0]):
+                            self.left_sensor_value = data['left']
+                            point = self._coord_translator(data['left'], 'left')
+                    else:
                         self.left_sensor_value = data['left']
                         point = self._coord_translator(data['left'], 'left')
                 elif i == 'bottom':
-                    if self.is_another_object(self.rear_sensor_value[0], data['bottom'][0]):
+                    if self.rear_sensor_value:
+                        if self.is_another_object(self.rear_sensor_value[0], data['bottom'][0]):
+                            self.rear_sensor_value = data['bottom']
+                            point = self._coord_translator(data['bottom'], 'bottom')
+                    else:
                         self.rear_sensor_value = data['bottom']
                         point = self._coord_translator(data['bottom'], 'bottom')
                 elif i == 'right':
-                    if self.is_another_object(self.right_sensor_value[0], data['right'][0]):
+                    if self.right_sensor_value:
+                        if self.is_another_object(self.right_sensor_value[0], data['right'][0]):
+                            self.right_sensor_value = data['right']
+                            point = self._coord_translator(data['right'], 'right')
+                    else:
                         self.right_sensor_value = data['right']
                         point = self._coord_translator(data['right'], 'right')
                 elif i == 'top':
-                    if self.is_another_object(self.front_sensor_value[0], data['top'][0]):
+                    if self.front_sensor_value:
+                        if self.is_another_object(self.front_sensor_value[0], data['top'][0]):
+                            self.front_sensor_value = data['top']
+                            point = self._coord_translator(data['top'], 'top')
+                    else:
                         self.front_sensor_value = data['top']
                         point = self._coord_translator(data['top'], 'top')
 
@@ -144,7 +160,10 @@ class CanvasDrawing(Widget):
 
     @staticmethod
     def is_another_object(value1, value2):
-        return True if abs(value2 - value1) <= DRIFT else False
+        if value1 is None or value2 is None:
+            return True
+        else:
+            return True if abs(value2 - value1) <= DRIFT else False
 
     def _coord_translator(self, coord, orientation='left'):
         point = None
@@ -204,6 +223,8 @@ class CanvasDrawing(Widget):
     def _get_rows_n_columns(data):
         r = 0
         c = 0
+        if len(data) == 0:
+            return r, c
         initial_row = data[0][0]
         initial_column = data[0][1]
         for i in data:
@@ -273,14 +294,13 @@ class CanvasDrawing(Widget):
                            (self.left_coord_out, self.right_coord_out, self.top_coord_out, self.bottom_coord_out) for
                            j in i]
 
-        # creat coordinate matrix
-        self.coord_matrix = self._generate_coord_matrix()
-
     def update_canvas(self, *args):
         if not self.monitor_screen.system_status:
             return False
         if len(self.safe_coord) == 0:
             self.create_coord()
+            # creat coordinate matrix
+            self.coord_matrix = self._generate_coord_matrix()
 
         if self.monitor_screen.number_of_detected_objects % 2 == 0:
             self.add_object(kind='car', pos_factor=1, color=self.colors[1])
