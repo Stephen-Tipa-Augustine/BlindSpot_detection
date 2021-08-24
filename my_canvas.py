@@ -9,6 +9,7 @@ from BSDS_firmware.distant_manager import DistantManager
 from kivy.uix.widget import Widget
 from kivy.properties import ObjectProperty, ListProperty, NumericProperty
 from kivy.clock import Clock
+from kivy.core.audio import SoundLoader
 from BSDS_firmware.helpers import ThreadManager
 
 # definition of constants
@@ -81,38 +82,38 @@ class CanvasDrawing(Widget):
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
-        # self.left_led = BlinkLED()
+        self.left_led = BlinkLED()
+        # Loading sound
+        self.audio = SoundLoader.load('./assets/audio1.mp3')
         # self.right_led = BlinkLED()
 
     def blink_led(self, *args):
-        Clock.schedule_interval(self._blink_right_led, timeout=2)
-        Clock.schedule_interval(self._blink_left_led, timeout=2)
+        # Clock.schedule_interval(self._blink_right_led, timeout=2)
+        Clock.schedule_interval(self._blink_left_led, timeout=1)
+        self.auditory_feedback()
 
-    def _blink_left_led(self, dt):
+    def _blink_left_led(self, dt=1):
         if not self.monitor_screen.system_status:
-            return False
+            return
         if self.monitor_screen is None:
             return
-        if 'Left' in self.danger_zone_positions:
-            print('Blinking left LED')
+        if 'Left' in self.monitor_screen.position_of_detected_objects:
             try:
-                self.left_led.run(delay=2)
-            except ImportError:
-                print('Failed to import modules')
-        elif self.left_led is not None and 'Left' not in self.danger_zone_positions:
-            self.left_led.stop()
+                self.left_led.run()
+            except AttributeError:
+                print('Failed to initialize LED')
 
     def _blink_right_led(self, dt):
         if not self.monitor_screen.system_status:
-            return False
+            return
         if self.monitor_screen is None:
             return
         if 'Right' in self.danger_zone_positions:
             print('Blinking right LED')
             try:
-                self.right_led.run(delay=2)
-            except ImportError:
-                print('Failed to import modules')
+                self.right_led.run()
+            except AttributeError:
+                print('Failed to initialize LED')
         elif self.right_led is not None and 'Right' not in self.danger_zone_positions:
             self.right_led.stop()
 
@@ -127,34 +128,34 @@ class CanvasDrawing(Widget):
                     if self.left_sensor_value:
                         if self.is_another_object(self.left_sensor_value[0], data['left'][0]):
                             self.left_sensor_value = data['left']
-                            point = self._coord_translator(data['left'], 'left')
+                            point = self._coord_translator(data['left'], 'left'), data['left'][1]
                     else:
                         self.left_sensor_value = data['left']
-                        point = self._coord_translator(data['left'], 'left')
+                        point = self._coord_translator(data['left'], 'left'), data['left'][1]
                 elif i == 'bottom':
                     if self.rear_sensor_value:
                         if self.is_another_object(self.rear_sensor_value[0], data['bottom'][0]):
                             self.rear_sensor_value = data['bottom']
-                            point = self._coord_translator(data['bottom'], 'bottom')
+                            point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
                     else:
                         self.rear_sensor_value = data['bottom']
-                        point = self._coord_translator(data['bottom'], 'bottom')
+                        point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
                 elif i == 'right':
                     if self.right_sensor_value:
                         if self.is_another_object(self.right_sensor_value[0], data['right'][0]):
                             self.right_sensor_value = data['right']
-                            point = self._coord_translator(data['right'], 'right')
+                            point = self._coord_translator(data['right'], 'right'), data['right'][1]
                     else:
                         self.right_sensor_value = data['right']
-                        point = self._coord_translator(data['right'], 'right')
+                        point = self._coord_translator(data['right'], 'right'), data['right'][1]
                 elif i == 'top':
                     if self.front_sensor_value:
                         if self.is_another_object(self.front_sensor_value[0], data['top'][0]):
                             self.front_sensor_value = data['top']
-                            point = self._coord_translator(data['top'], 'top')
+                            point = self._coord_translator(data['top'], 'top'), data['top'][1]
                     else:
                         self.front_sensor_value = data['top']
-                        point = self._coord_translator(data['top'], 'top')
+                        point = self._coord_translator(data['top'], 'top'), data['top'][1]
 
         return point
 
@@ -242,7 +243,9 @@ class CanvasDrawing(Widget):
         return r, c
 
     def auditory_feedback(self, *args):
-        pass
+        if self.audio:
+            self.audio.loop = True
+            self.audio.play()
 
     def _generate_coord(self, inner=True):
         if inner:
@@ -296,20 +299,27 @@ class CanvasDrawing(Widget):
 
     def update_canvas(self, *args):
         if not self.monitor_screen.system_status:
-            return False
+            return
+            
         if len(self.safe_coord) == 0:
             self.create_coord()
             # creat coordinate matrix
             self.coord_matrix = self._generate_coord_matrix()
+            
+            return
+        
+        m = ThreadManager()
+        t = threading.Thread(target=lambda q: q.put(self.get_distance()), args=(m.que, ))
+        t.start()
+        m.add_thread(t)
+        m.join_threads()
+        coord = m.check_for_return_value()
+        print("The measured distance is: ", coord)
+        
+        if coord:
+            self.add_object(kind='car', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1])
 
-        if self.monitor_screen.number_of_detected_objects % 2 == 0:
-            self.add_object(kind='car', pos_factor=1, color=self.colors[1])
-        else:
-            self.add_object(kind='car',
-                            pos_factor=(random.choice(self.pos_factors_x), random.choice(self.pos_factors_y)),
-                            color=self.colors[0])
-
-    def add_object(self, kind, pos_factor, color):
+    def add_object(self, kind, center, color):
         """
         :param color: a tuple of the color proportions
         :param pos_factor: a numeric value used for computing the position
@@ -317,18 +327,6 @@ class CanvasDrawing(Widget):
         :return:
         """
 
-        m = ThreadManager()
-        t = threading.Thread(target=lambda q: q.put(self.get_distance()), args=(m.que, ))
-        t.start()
-        m.add_thread(t)
-        m.join_threads()
-        print("The measured distance is: ", m.check_for_return_value())
-
-        if pos_factor == 1:
-            coord = random.choice(self.safe_coord)
-            center = coord
-        else:
-            center = random.choice(self.danger_coord)
         obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom", text_color=color)
 
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
@@ -339,6 +337,8 @@ class CanvasDrawing(Widget):
             self.monitor_screen.position_of_detected_objects.append(object_info['location'])
             if object_info['in-danger-zone']:
                 self.danger_zone_positions.append(object_info['location'])
+            # if object_info['location'] == 'Left':
+            #   threading.Thread(target=self._blink_left_led).start()
 
         self.monitor_screen.number_of_detected_objects += 1
         self.add_widget(obj)

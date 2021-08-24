@@ -29,14 +29,14 @@ class DistantManager:
         self.rear_sensor = UltrasonicSensor()
 
     def read_left_sensor(self):
-        pass
+        # for i in range(5):
+        #    self.raw_rear_data.append(self.rear_sensor.run())
+        #    time.sleep(.5)
+
+        return self.rear_sensor.run() # min(self.raw_rear_data)
 
     def read_rear_sensor(self):
-        for i in range(5):
-            self.raw_rear_data.append(self.rear_sensor.run())
-            time.sleep(1)
-
-        return min(self.raw_rear_data)
+        pass
 
     def read_right_sensor(self):
         pass
@@ -47,10 +47,10 @@ class DistantManager:
     def run(self):
         # while True:
         m = ThreadManager()
-        t = threading.Thread(target=lambda q: q.put(self.read_rear_sensor()), args=(m.que,))
+        t = threading.Thread(target=lambda q: q.put(self.read_left_sensor()), args=(m.que,))
         t.start()
         m.add_thread(t)
         m.join_threads()
         result = m.check_for_return_value()
-        return {'left': None, 'bottom': (result, 'in' if result < REFERENCE_DISTANCE else 'out'),
+        return {'left': (result, 'in' if result < REFERENCE_DISTANCE else 'out'), 'bottom': None,
                 'right': None, 'top': None}

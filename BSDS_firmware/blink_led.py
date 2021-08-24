@@ -14,24 +14,30 @@ class BlinkLED:
 
         # set GPIO direction (IN / OUT)
         GPIO.setup(self.GPIO_LED, GPIO.OUT)
+        self.state = False
+        self.blinking = True
 
-    def turn_off(self, delay=1.):
+    def turn_off(self):
         GPIO.output(self.GPIO_LED, GPIO.LOW)
-        time.sleep(delay)
+        self.state = False
 
-    def turn_on(self, delay=1.):
+    def turn_on(self):
         GPIO.output(self.GPIO_LED, GPIO.HIGH)
-        time.sleep(delay)
+        self.state = True
 
     @staticmethod
     def clean_up():
         GPIO.cleanup()
 
-    def run(self, delay=2):
-        self.turn_on(delay=delay * .4)
-        self.turn_off(delay=delay * .4)
+    def run(self):
+        if self.state:
+            self.turn_off()
+        else:
+            self.turn_on()
 
     def stop(self):
+        self.state = False
+        self.blinking = False
         self.turn_off()
         self.clean_up()
 

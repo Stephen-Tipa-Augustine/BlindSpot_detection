@@ -38,6 +38,7 @@ class UltrasonicSensor:
         t = stop_time - start_time
         # multiply with the sonic speed (34300 cm/s)
         # and divide by 2, because there and back
+        print("Measured Distance = %.1f cm" % ((t * 34300) / 2))
         return float("%.1f" % ((t * 34300) / 2))
 
     @staticmethod

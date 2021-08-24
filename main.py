@@ -54,9 +54,9 @@ class SplashScreen(BoxLayout):
             self.ids.progress_bar_label.text = 'Loading.. [{:} %]'.format(100)
             time.sleep(2)
             self.screen_manager.current = 'main_screen'
-            self.resize_window(800, 600)
+            # self.resize_window(800, 600)
             Window.borderless = False
-            # Window.maximize()
+            Window.maximize()
             return False
 
     @staticmethod
