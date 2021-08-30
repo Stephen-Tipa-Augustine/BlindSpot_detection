@@ -11,6 +11,7 @@ from kivy.properties import ObjectProperty, ListProperty, NumericProperty
 from kivy.clock import Clock
 from kivy.core.audio import SoundLoader
 from BSDS_firmware.helpers import ThreadManager
+import pygame
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE, MAXIMUM_DISTANCE, DRIFT
@@ -84,15 +85,15 @@ class CanvasDrawing(Widget):
         self.distant_manager = DistantManager()
         self.left_led = BlinkLED()
         # Loading sound
-        self.audio = SoundLoader.load('./assets/audio1.mp3')
+        
         # self.right_led = BlinkLED()
 
     def blink_led(self, *args):
         # Clock.schedule_interval(self._blink_right_led, timeout=2)
         Clock.schedule_interval(self._blink_left_led, timeout=1)
-        self.auditory_feedback()
 
     def _blink_left_led(self, dt=1):
+        self.auditory_feedback()
         if not self.monitor_screen.system_status:
             return
         if self.monitor_screen is None:
@@ -100,6 +101,7 @@ class CanvasDrawing(Widget):
         if 'Left' in self.monitor_screen.position_of_detected_objects:
             try:
                 self.left_led.run()
+                self.auditory_feedback()
             except AttributeError:
                 print('Failed to initialize LED')
 
@@ -121,20 +123,32 @@ class CanvasDrawing(Widget):
         return self._coord_mapper(self.distant_manager.run())
 
     def _coord_mapper(self, data):
+        print('The  distance parameters are>: ')
+        print(data)
         point = None
         for i in data:
             if data[i]:
                 if i == 'left':
+                    print('Processing left coords')
                     if self.left_sensor_value:
                         if self.is_another_object(self.left_sensor_value[0], data['left'][0]):
                             self.left_sensor_value = data['left']
                             point = self._coord_translator(data['left'], 'left'), data['left'][1]
+                            print('Updatimng left point')
+                        else:
+                            self.left_sensor_value = data['left']
+                            point = self._coord_translator(data['left'], 'left'), data['left'][1]
+                            print('Registering left coord')
                     else:
                         self.left_sensor_value = data['left']
                         point = self._coord_translator(data['left'], 'left'), data['left'][1]
+                        print('Registering left coord')
                 elif i == 'bottom':
                     if self.rear_sensor_value:
                         if self.is_another_object(self.rear_sensor_value[0], data['bottom'][0]):
+                            self.rear_sensor_value = data['bottom']
+                            point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
+                        else:
                             self.rear_sensor_value = data['bottom']
                             point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
                     else:
@@ -145,6 +159,9 @@ class CanvasDrawing(Widget):
                         if self.is_another_object(self.right_sensor_value[0], data['right'][0]):
                             self.right_sensor_value = data['right']
                             point = self._coord_translator(data['right'], 'right'), data['right'][1]
+                        else:
+                            self.right_sensor_value = data['right']
+                            point = self._coord_translator(data['right'], 'right'), data['right'][1]
                     else:
                         self.right_sensor_value = data['right']
                         point = self._coord_translator(data['right'], 'right'), data['right'][1]
@@ -153,9 +170,14 @@ class CanvasDrawing(Widget):
                         if self.is_another_object(self.front_sensor_value[0], data['top'][0]):
                             self.front_sensor_value = data['top']
                             point = self._coord_translator(data['top'], 'top'), data['top'][1]
+                        else:
+                            self.front_sensor_value = data['top']
+                            point = self._coord_translator(data['top'], 'top'), data['top'][1]
                     else:
                         self.front_sensor_value = data['top']
                         point = self._coord_translator(data['top'], 'top'), data['top'][1]
+                        
+        print(point)
 
         return point
 
@@ -168,6 +190,7 @@ class CanvasDrawing(Widget):
 
     def _coord_translator(self, coord, orientation='left'):
         point = None
+        print('Coord translator', coord)
         if orientation == 'left' and coord[1] == 'in':
             r, c = self.coord_matrix['left_in']
             point = self._pixels_from_matrix((r, c), coord, self.left_coord_in)
@@ -192,6 +215,8 @@ class CanvasDrawing(Widget):
         elif orientation == 'top' and coord[1] == 'out':
             r, c = self.coord_matrix['top_out']
             point = self._pixels_from_matrix((r, c), coord, self.top_coord_out)
+            
+        print('Point: ', point)
         return point
 
     def _generate_coord_matrix(self):
@@ -243,9 +268,9 @@ class CanvasDrawing(Widget):
         return r, c
 
     def auditory_feedback(self, *args):
-        if self.audio:
-            self.audio.loop = True
-            self.audio.play()
+        pygame.mixer.init()
+        pygame.mixer.music.load('BSD_alert.wav')
+        pygame.mixer.music.play()
 
     def _generate_coord(self, inner=True):
         if inner:
