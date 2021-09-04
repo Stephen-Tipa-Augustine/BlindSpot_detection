@@ -86,9 +86,10 @@ class MonitorScreen(ScrollView):
     def detect_motion(self, dt):
         self.accel_obj.vehicle_moving()
         self.accel_obj.vehicle_rotating()
-        self.system_status = self.accel_obj.moving or self.accel_obj.rotating
-        if self.mode == 'standby' and (self.accel_obj.moving or self.accel_obj.rotating):
+        status = self.accel_obj.moving or self.accel_obj.rotating
+        if self.mode == 'standby' and status and not self.system_status:
             self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
+            self.system_status = status
 
     def switch_view(self, switch=None, auto=False):
         container = self.ids.monitor_body

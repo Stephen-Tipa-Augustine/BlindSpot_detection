@@ -38,11 +38,11 @@ class Accelerometer:
         return False if changed_axis < 1 else True
 
     def vehicle_moving(self):
-        self.moving = self.detect_state(self.accel_data) if not self.moving else True
+        self.moving = self.detect_state(self.accel_data)
         self.accel_data = self.get_accelerometer_data()
 
     def vehicle_rotating(self):
-        self.rotating = self.detect_state(self.gyro_data, state_kind='gyro') if not self.rotating else True
+        self.rotating = self.detect_state(self.gyro_data, state_kind='gyro')
         self.gyro_data = self.get_gyroscope_data()
 
     def run(self):
