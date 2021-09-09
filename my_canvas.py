@@ -55,6 +55,7 @@ class CanvasDrawing(Widget):
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
         self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human',
                             'shield-alert-outline': 'Unknown'}
+        self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
 
         # initializing sensors
         self.left_led = None
@@ -127,42 +128,26 @@ class CanvasDrawing(Widget):
         for i in data:
             if data[i]:
                 if i == 'left':
-                    if self.left_sensor_value and self.is_another_object(self.left_sensor_value[0], data['left'][0]):
-                        self.left_sensor_value = data['left']
-                        point = self._coord_translator(data['left'], 'left'), data['left'][1]
-                    else:
-                        self.left_sensor_value = data['left']
-                        point = self._coord_translator(data['left'], 'left'), data['left'][1]
+                    self.left_sensor_value = data['left']
+                    point = self._coord_translator(data['left'], 'left'), data['left'][1]
                 elif i == 'bottom':
-                    if self.rear_sensor_value and self.is_another_object(self.rear_sensor_value[0], data['bottom'][0]):
-                        self.rear_sensor_value = data['bottom']
-                        point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
-                    else:
-                        self.rear_sensor_value = data['bottom']
-                        point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
+                    self.rear_sensor_value = data['bottom']
+                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
                 elif i == 'right':
-                    if self.right_sensor_value and self.is_another_object(self.right_sensor_value[0], data['right'][0]):
-                        self.right_sensor_value = data['right']
-                        point = self._coord_translator(data['right'], 'right'), data['right'][1]
-                    else:
-                        self.right_sensor_value = data['right']
-                        point = self._coord_translator(data['right'], 'right'), data['right'][1]
+                    self.right_sensor_value = data['right']
+                    point = self._coord_translator(data['right'], 'right'), data['right'][1]
                 elif i == 'top':
-                    if self.front_sensor_value and self.is_another_object(self.front_sensor_value[0], data['top'][0]):
-                        self.front_sensor_value = data['top']
-                        point = self._coord_translator(data['top'], 'top'), data['top'][1]
-                    else:
-                        self.front_sensor_value = data['top']
-                        point = self._coord_translator(data['top'], 'top'), data['top'][1]
+                    self.front_sensor_value = data['top']
+                    point = self._coord_translator(data['top'], 'top'), data['top'][1]
 
         return point
 
-    @staticmethod
-    def is_another_object(value1, value2):
-        if value1 is None or value2 is None:
-            return True
-        else:
-            return True if abs(value2 - value1) <= DRIFT else False
+    def is_another_object(self, location, pos):
+        value = False
+        for i in self.added_objects[location]:
+            if i['pos'] == pos:
+                value = True, i['ref']
+        return value, None
 
     def _coord_translator(self, coord, orientation='left'):
         point = None
@@ -306,7 +291,7 @@ class CanvasDrawing(Widget):
             return
 
         m = ThreadManager()
-        t = threading.Thread(target=lambda q: q.put(self.get_distance()), args=(m.que, ))
+        t = threading.Thread(target=lambda q: q.put(self.get_distance()), args=(m.que,))
         t.start()
         m.add_thread(t)
         m.join_threads()
@@ -325,21 +310,51 @@ class CanvasDrawing(Widget):
         :param kind: string options, one of ['car', 'motorbike', 'human-handsdown', 'bike-fast', 'shield-alert-outline']
         :return:
         """
-
-        obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom", text_color=color)
-
-        if self.object_kind[kind] not in self.monitor_screen.detected_objects:
-            self.monitor_screen.detected_objects.append(self.object_kind[kind])
-
         object_info = self.get_object_location(center)
-        if object_info['location'] not in self.monitor_screen.position_of_detected_objects:
-            self.monitor_screen.position_of_detected_objects.append(object_info['location'])
+        decision = self.is_another_object(location=object_info['location'], pos=center)
+        if not decision[0]:
+            obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom",
+                               text_color=color)
+            if self.object_kind[kind] not in self.monitor_screen.detected_objects:
+                self.monitor_screen.detected_objects.append(self.object_kind[kind])
+            if object_info['location'] not in self.monitor_screen.position_of_detected_objects:
+                self.monitor_screen.position_of_detected_objects.append(object_info['location'])
 
-        if description == 'in' and object_info['location'] not in self.danger_zone_positions:
-            self.danger_zone_positions.append(object_info['location'])
+            if description == 'in' and object_info['location'] not in self.danger_zone_positions:
+                self.danger_zone_positions.append(object_info['location'])
 
-        self.monitor_screen.number_of_detected_objects += 1
-        self.add_widget(obj)
+            self.monitor_screen.number_of_detected_objects += 1
+            self.add_widget(obj)
+            self.added_objects[object_info['location']].append({'ref': obj, 'pos': center,
+                                                                'orientation': object_info['location'],
+                                                                'description': description,
+                                                                'kind': self.object_kind[kind]})
+        else:
+            self.monitor_screen.number_of_detected_objects -= 1
+            self.remove_widget(decision[1])
+
+            orientation_count = 0
+            description_count = 0
+            kind_count = 0
+            for i in self.added_objects[object_info['location']]:
+                if i['orientation'] == object_info['location']:
+                    orientation_count += 1
+                if i['description'] == 'in':
+                    description_count += 1
+                if i['kind'] == self.object_kind[kind]:
+                    kind_count += 1
+
+            if orientation_count == 1 and object_info['location'] in self.monitor_screen.position_of_detected_objects:
+                index = self.monitor_screen.position_of_detected_objects.index(object_info['location'])
+                del self.monitor_screen.position_of_detected_objects[index]
+
+            if description_count == 1 and object_info['location'] in self.danger_zone_positions:
+                index = self.danger_zone_positions.index(object_info['location'])
+                del self.danger_zone_positions[index]
+
+            if kind_count == 1 and self.object_kind[kind] in self.monitor_screen.detected_objects:
+                index = self.monitor_screen.detected_objects.index(self.object_kind[kind])
+                del self.monitor_screen.detected_objects[index]
 
     def get_object_location(self, coord):
         if coord in self.left_coord_in or coord in self.left_coord_out:

@@ -52,7 +52,7 @@
                         pos_hint: {'center_x': .5, 'center_y': .5}
                         active: root.system_status
                         size_hint_x: .4
-                        on_press: root.switch_view(self.active)
+                        on_press: root.switch_view(switch=self.active)
             MDCard:
                 orientation: "vertical"
                 padding: "8dp"

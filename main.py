@@ -100,7 +100,7 @@ class MonitorScreen(ScrollView):
         if auto:
             self._switch_view(switch=switch, container=container)
         else:
-            self._switch_view(switch=not auto, container=container)
+            self._switch_view(switch=not switch, container=container)
 
     def _switch_view(self, switch, container):
         if switch:
