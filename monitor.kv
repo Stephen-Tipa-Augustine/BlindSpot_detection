@@ -50,9 +50,9 @@
                     MDSwitch:
                         id: system_switch
                         pos_hint: {'center_x': .5, 'center_y': .5}
-                        active: root.system_status
+                        active: False
                         size_hint_x: .4
-                        on_press: root.switch_view(switch=self.active)
+                        on_press: root.switch_view(switch=not self.active)
             MDCard:
                 orientation: "vertical"
                 padding: "8dp"

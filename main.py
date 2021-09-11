@@ -79,8 +79,8 @@ class MonitorScreen(ScrollView):
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
-        self.accel_obj = Accelerometer()
-        Clock.schedule_interval(self.detect_motion, 10)
+        # self.accel_obj = Accelerometer()
+        # Clock.schedule_interval(self.detect_motion, 10)
         self.mode = 'standby'
 
     def detect_motion(self, dt):
@@ -97,19 +97,18 @@ class MonitorScreen(ScrollView):
         self.detected_objects = []
         self.number_of_detected_objects = 0
         self.position_of_detected_objects = []
-        if auto:
-            self._switch_view(switch=switch, container=container)
-        else:
-            self._switch_view(switch=not switch, container=container)
+        self._switch_view(switch=switch, container=container)
 
     def _switch_view(self, switch, container):
+        print('The system status is: ', self.system_status)
+        print('The switch status is: ', switch)
         if switch:
-            self.system_status = True
             container.add_widget(ActiveMode(monitor_screen=self))
             self.mode = 'active'
         else:
-            self.system_status = False
             container.add_widget(StandbyMode(monitor_screen=self))
+            self.mode = 'standby'
+        self.system_status = switch
 
 
 class BSDSApp(MDApp):

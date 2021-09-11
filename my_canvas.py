@@ -125,6 +125,7 @@ class CanvasDrawing(Widget):
 
     def _coord_mapper(self, data):
         point = None
+        print('In the coord mapper')
         for i in data:
             if data[i]:
                 if i == 'left':
@@ -143,11 +144,11 @@ class CanvasDrawing(Widget):
         return point
 
     def is_another_object(self, location, pos):
-        value = False
+        value = False, None, None
         for i in self.added_objects[location]:
             if i['pos'] == pos:
-                value = True, i['ref']
-        return value, None
+                value = True, self.added_objects[location].index(i), i['ref']
+        return value
 
     def _coord_translator(self, coord, orientation='left'):
         point = None
@@ -330,9 +331,6 @@ class CanvasDrawing(Widget):
                                                                 'description': description,
                                                                 'kind': self.object_kind[kind]})
         else:
-            self.monitor_screen.number_of_detected_objects -= 1
-            self.remove_widget(decision[1])
-
             orientation_count = 0
             description_count = 0
             kind_count = 0
@@ -355,6 +353,12 @@ class CanvasDrawing(Widget):
             if kind_count == 1 and self.object_kind[kind] in self.monitor_screen.detected_objects:
                 index = self.monitor_screen.detected_objects.index(self.object_kind[kind])
                 del self.monitor_screen.detected_objects[index]
+        
+            if self.added_objects[object_info['location']][decision[1]]:    
+                del self.added_objects[object_info['location']][decision[1]]
+                
+            self.monitor_screen.number_of_detected_objects -= 1
+            self.remove_widget(decision[-1])
 
     def get_object_location(self, coord):
         if coord in self.left_coord_in or coord in self.left_coord_out:
