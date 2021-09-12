@@ -11,7 +11,7 @@ from BSDS_firmware.helpers import ThreadManager
 import pygame
 
 # definition of constants
-from BSDS_firmware.distant_manager import REFERENCE_DISTANCE, DRIFT
+from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
 
 
 class CanvasDrawing(Widget):
@@ -94,7 +94,6 @@ class CanvasDrawing(Widget):
             self.auditory_feedback()
 
     def _blink_left_led(self, dt=1):
-        # self.auditory_feedback()
         if not self.monitor_screen.system_status:
             return
         if self.monitor_screen is None:
@@ -112,7 +111,6 @@ class CanvasDrawing(Widget):
         if self.monitor_screen is None:
             return
         if 'Right' in self.danger_zone_positions:
-            print('Blinking right LED')
             try:
                 self.right_led.run()
             except AttributeError:
@@ -125,7 +123,6 @@ class CanvasDrawing(Widget):
 
     def _coord_mapper(self, data):
         point = None
-        print('In the coord mapper')
         for i in data:
             if data[i]:
                 if i == 'left':
@@ -143,10 +140,10 @@ class CanvasDrawing(Widget):
 
         return point
 
-    def is_another_object(self, location, pos):
+    def is_another_object(self, location, sensor_id=''):
         value = False, None, None
         for i in self.added_objects[location]:
-            if i['pos'] == pos:
+            if i['sensor_id'] == sensor_id:
                 value = True, self.added_objects[location].index(i), i['ref']
         return value
 
@@ -303,8 +300,9 @@ class CanvasDrawing(Widget):
             self.add_object(kind='car', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1],
                             description=coord[1])
 
-    def add_object(self, kind, center, color, description='in'):
+    def add_object(self, kind, center, color, description='in', sensor_id='left-1'):
         """
+        :param sensor_id:
         :param description:
         :param center:
         :param color: a tuple of the color proportions
@@ -312,53 +310,59 @@ class CanvasDrawing(Widget):
         :return:
         """
         object_info = self.get_object_location(center)
-        decision = self.is_another_object(location=object_info['location'], pos=center)
-        if not decision[0]:
-            obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom",
-                               text_color=color)
-            if self.object_kind[kind] not in self.monitor_screen.detected_objects:
-                self.monitor_screen.detected_objects.append(self.object_kind[kind])
-            if object_info['location'] not in self.monitor_screen.position_of_detected_objects:
-                self.monitor_screen.position_of_detected_objects.append(object_info['location'])
+        decision = self.is_another_object(location=object_info['location'], sensor_id=sensor_id)
+        if decision[0]:
+            self._remove_object(object_info, kind, decision)
+        self._add_object(kind, center, color, object_info, description, sensor_id)
 
-            if description == 'in' and object_info['location'] not in self.danger_zone_positions:
-                self.danger_zone_positions.append(object_info['location'])
+    def _remove_object(self, object_info, kind, decision):
+        orientation_count = 0
+        description_count = 0
+        kind_count = 0
+        for i in self.added_objects[object_info['location']]:
+            if i['orientation'] == object_info['location']:
+                orientation_count += 1
+            if i['description'] == 'in':
+                description_count += 1
+            if i['kind'] == self.object_kind[kind]:
+                kind_count += 1
 
-            self.monitor_screen.number_of_detected_objects += 1
-            self.add_widget(obj)
-            self.added_objects[object_info['location']].append({'ref': obj, 'pos': center,
-                                                                'orientation': object_info['location'],
-                                                                'description': description,
-                                                                'kind': self.object_kind[kind]})
-        else:
-            orientation_count = 0
-            description_count = 0
-            kind_count = 0
-            for i in self.added_objects[object_info['location']]:
-                if i['orientation'] == object_info['location']:
-                    orientation_count += 1
-                if i['description'] == 'in':
-                    description_count += 1
-                if i['kind'] == self.object_kind[kind]:
-                    kind_count += 1
+        if orientation_count == 1 and object_info['location'] in self.monitor_screen.position_of_detected_objects:
+            index = self.monitor_screen.position_of_detected_objects.index(object_info['location'])
+            del self.monitor_screen.position_of_detected_objects[index]
 
-            if orientation_count == 1 and object_info['location'] in self.monitor_screen.position_of_detected_objects:
-                index = self.monitor_screen.position_of_detected_objects.index(object_info['location'])
-                del self.monitor_screen.position_of_detected_objects[index]
+        if description_count == 1 and object_info['location'] in self.danger_zone_positions:
+            index = self.danger_zone_positions.index(object_info['location'])
+            del self.danger_zone_positions[index]
 
-            if description_count == 1 and object_info['location'] in self.danger_zone_positions:
-                index = self.danger_zone_positions.index(object_info['location'])
-                del self.danger_zone_positions[index]
+        if kind_count == 1 and self.object_kind[kind] in self.monitor_screen.detected_objects:
+            index = self.monitor_screen.detected_objects.index(self.object_kind[kind])
+            del self.monitor_screen.detected_objects[index]
 
-            if kind_count == 1 and self.object_kind[kind] in self.monitor_screen.detected_objects:
-                index = self.monitor_screen.detected_objects.index(self.object_kind[kind])
-                del self.monitor_screen.detected_objects[index]
-        
-            if self.added_objects[object_info['location']][decision[1]]:    
-                del self.added_objects[object_info['location']][decision[1]]
-                
-            self.monitor_screen.number_of_detected_objects -= 1
-            self.remove_widget(decision[-1])
+        if self.added_objects[object_info['location']][decision[1]]:
+            del self.added_objects[object_info['location']][decision[1]]
+
+        self.monitor_screen.number_of_detected_objects -= 1
+        self.remove_widget(decision[-1])
+
+    def _add_object(self, kind, center, color, object_info, description, sensor_id):
+        obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom",
+                           text_color=color)
+        if self.object_kind[kind] not in self.monitor_screen.detected_objects:
+            self.monitor_screen.detected_objects.append(self.object_kind[kind])
+        if object_info['location'] not in self.monitor_screen.position_of_detected_objects:
+            self.monitor_screen.position_of_detected_objects.append(object_info['location'])
+
+        if description == 'in' and object_info['location'] not in self.danger_zone_positions:
+            self.danger_zone_positions.append(object_info['location'])
+
+        self.monitor_screen.number_of_detected_objects += 1
+        self.add_widget(obj)
+        self.added_objects[object_info['location']].append({'ref': obj, 'pos': center,
+                                                            'orientation': object_info['location'],
+                                                            'description': description,
+                                                            'kind': self.object_kind[kind],
+                                                            'sensor_id': sensor_id})
 
     def get_object_location(self, coord):
         if coord in self.left_coord_in or coord in self.left_coord_out:
