@@ -157,7 +157,7 @@
                         MDIconButton:
                             icon: "volume-minus"
                             pos_hint: {'center_x': .2, 'center_y': .5}
-                            on_press: volume_controller.value -= 5
+                            on_press: volume_controller.value -= 5; root.set_volume(volume_controller.value)
                             size_hint_x: .4
 
                         Slider:
@@ -167,11 +167,12 @@
                             value: 40
                             step: 5
                             pos_hint: {'center_x': .2}
+                            on_touch_up: root.set_volume(self.value)
 
                         MDIconButton:
                             icon: "volume-plus"
                             pos_hint: {'center_x': .2, 'center_y': .5}
-                            on_press: volume_controller.value +=  5
+                            on_press: volume_controller.value +=  5; root.set_volume(volume_controller.value)
                             size_hint_x: .4
 
                     MDLabel:

@@ -9,6 +9,7 @@ from kivy.core.window import Window
 from kivymd.icon_definitions import md_icons
 from kivymd.uix.button import MDIconButton
 from BSDS_firmware.accelerometer import Accelerometer
+import pygame
 
 
 class BlindSpotObject(MDIconButton):
@@ -82,6 +83,7 @@ class MonitorScreen(ScrollView):
         # self.accel_obj = Accelerometer()
         # Clock.schedule_interval(self.detect_motion, 10)
         self.mode = 'standby'
+        pygame.mixer.init()
 
     def detect_motion(self, dt):
         self.accel_obj.vehicle_moving()
@@ -109,6 +111,10 @@ class MonitorScreen(ScrollView):
             container.add_widget(StandbyMode(monitor_screen=self))
             self.mode = 'standby'
         self.system_status = switch
+
+    @staticmethod
+    def set_volume(value):
+        pygame.mixer.music.set_volume(value/100)
 
 
 class BSDSApp(MDApp):

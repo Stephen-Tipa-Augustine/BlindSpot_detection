@@ -86,18 +86,22 @@ class CanvasDrawing(Widget):
         # self.right_led = BlinkLED()
 
     def _sound_auditory_alert(self, dt):
-        if not self.monitor_screen.system_status:
-            return
         if self.monitor_screen is None:
-            return
-        if len(self.danger_zone_positions) != 0:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
+            return False
+        if not self.monitor_screen.system_status:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
+            return False
+        if len(self.danger_zone_positions) != 0 and not pygame.mixer.music.get_busy():
             self.auditory_feedback()
 
     def _blink_left_led(self, dt=1):
-        if not self.monitor_screen.system_status:
-            return
         if self.monitor_screen is None:
-            return
+            return False
+        if not self.monitor_screen.system_status:
+            return False
         if 'Left' in self.danger_zone_positions:
             try:
                 self.left_led.run()
@@ -106,10 +110,10 @@ class CanvasDrawing(Widget):
                 print('Failed to initialize LED')
 
     def _blink_right_led(self, dt):
-        if not self.monitor_screen.system_status:
-            return
         if self.monitor_screen is None:
-            return
+            return False
+        if not self.monitor_screen.system_status:
+            return False
         if 'Right' in self.danger_zone_positions:
             try:
                 self.right_led.run()
