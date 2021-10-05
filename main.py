@@ -73,6 +73,7 @@ class MonitorScreen(ScrollView):
     nav_drawer = ObjectProperty()
     # Defining global variables
     system_status = BooleanProperty(defaultvalue=False)
+    mute = BooleanProperty(defaultvalue=False)
     detected_objects = ListProperty(defaultvalue=[])
     number_of_detected_objects = NumericProperty(defaultvalue=0)
     position_of_detected_objects = ListProperty(defaultvalue=[])
@@ -112,9 +113,15 @@ class MonitorScreen(ScrollView):
             self.mode = 'standby'
         self.system_status = switch
 
-    @staticmethod
-    def set_volume(value):
-        pygame.mixer.music.set_volume(value/100)
+    # @staticmethod
+    def set_volume(self, value=0, disable=False):
+        if disable and self.mute:
+            self.mute = False
+        elif disable and not self.mute:
+            self.mute = True
+        new_value = 0 if self.mute else value/100
+        print('New vol is: ', new_value)
+        pygame.mixer.music.set_volume(new_value)
 
 
 class BSDSApp(MDApp):

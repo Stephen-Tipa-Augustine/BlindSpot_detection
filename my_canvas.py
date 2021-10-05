@@ -87,15 +87,18 @@ class CanvasDrawing(Widget):
 
     def _sound_auditory_alert(self, dt):
         if self.monitor_screen is None:
-            if pygame.mixer.music.get_busy():
+            if pygame.mixer.music.get_busy() == 1:
                 pygame.mixer.music.stop()
             return False
         if not self.monitor_screen.system_status:
-            if pygame.mixer.music.get_busy():
+            if pygame.mixer.music.get_busy() == 1:
                 pygame.mixer.music.stop()
             return False
-        if len(self.danger_zone_positions) != 0 and not pygame.mixer.music.get_busy():
+        if len(self.danger_zone_positions) != 0 and pygame.mixer.music.get_busy() == 0:
             self.auditory_feedback()
+            
+        if len(self.danger_zone_positions) == 0 and pygame.mixer.music.get_busy() == 1:
+            pygame.mixer.music.stop()
 
     def _blink_left_led(self, dt=1):
         if self.monitor_screen is None:
@@ -230,7 +233,8 @@ class CanvasDrawing(Widget):
 
     @staticmethod
     def auditory_feedback():
-        pygame.mixer.music.play()
+        pygame.mixer.music.play(loops=-1)
+        # pygame.mixer.music.set_volume(.5)
 
     def _generate_coord(self, inner=True):
         if inner:
@@ -301,7 +305,7 @@ class CanvasDrawing(Widget):
         print("The measured distance is: ", coord)
 
         if coord:
-            self.add_object(kind='car', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1],
+            self.add_object(kind='shield-alert-outline', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1],
                             description=coord[1])
 
     def add_object(self, kind, center, color, description='in', sensor_id='left-1'):
@@ -350,7 +354,7 @@ class CanvasDrawing(Widget):
         self.remove_widget(decision[-1])
 
     def _add_object(self, kind, center, color, object_info, description, sensor_id):
-        obj = MDIconButton(icon=kind, center=center, user_font_size="32sp", theme_text_color="Custom",
+        obj = MDIconButton(icon=kind, center=center, user_font_size="50sp", theme_text_color="Custom",
                            text_color=color)
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
             self.monitor_screen.detected_objects.append(self.object_kind[kind])

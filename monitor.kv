@@ -27,7 +27,9 @@
                 orientation: "vertical"
                 padding: "8dp"
                 pos_hint: {"center_x": .5, "center_y": .5}
-                focus_behavior: True
+                # focus_behavior: True
+                theme_text_color:  "Custom"
+                md_bg_color: 0.753,0.753,0.753,.4
                 MDLabel:
                     text: "System Status"
                     theme_text_color: "Secondary"
@@ -57,10 +59,12 @@
                 orientation: "vertical"
                 padding: "8dp"
                 pos_hint: {"center_x": .5, "center_y": .5}
-                focus_behavior: True
+                # focus_behavior: True
+                theme_text_color:  "Custom"
+                md_bg_color: 0.753,0.753,0.753,.4
                 MDLabel:
                     id: detected_object_label
-                    text: "Currently detected"
+                    text: "Detected objects"
                     theme_text_color: "Secondary"
                     size_hint_y: None
                     height: self.texture_size[1]
@@ -81,7 +85,9 @@
                 orientation: "vertical"
                 padding: "8dp"
                 pos_hint: {"center_x": .5, "center_y": .5}
-                focus_behavior: True
+                # focus_behavior: True
+                theme_text_color:  "Custom"
+                md_bg_color: 0.753,0.753,0.753,.4
                 MDLabel:
                     id: object_position_label
                     text: "Position of detected object"
@@ -104,7 +110,9 @@
                 orientation: "vertical"
                 padding: "8dp"
                 pos_hint: {"center_x": .5, "center_y": .5}
-                focus_behavior: True
+                # focus_behavior: True
+                theme_text_color:  "Custom"
+                md_bg_color: 0.753,0.753,0.753,.4
                 MDLabel:
                     id: no_of_object_label
                     text: "No. of detected objects"
@@ -130,7 +138,9 @@
                 size_hint: 1, None
                 height: "180dp"
                 pos_hint: {"center_x": .5, "center_y": .5}
-                focus_behavior: True
+                # focus_behavior: True
+                theme_text_color:  "Custom"
+                md_bg_color: 0.753,0.753,0.753,.4
                 MDBoxLayout:
                     size_hint_y: None
                     height: volume_control.texture_size[1]
@@ -139,7 +149,7 @@
                         pos_hint: {'center_y': .5}
                         size_hint_y: None
                         height: volume_control.texture_size[1]
-                        on_press: self.icon = "volume-high" if self.icon == "volume-mute" else "volume-mute"
+                        on_press: self.icon = "volume-high" if self.icon == "volume-mute" else "volume-mute"; root.set_volume(disable=True)
                     MDLabel:
                         text: 'Volume Control'
                         id: volume_control
