@@ -81,18 +81,21 @@ class MonitorScreen(ScrollView):
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
-        # self.accel_obj = Accelerometer()
-        # Clock.schedule_interval(self.detect_motion, 10)
+        self.accel_obj = Accelerometer()
+        Clock.schedule_interval(self.detect_motion, 10)
         self.mode = 'standby'
         pygame.mixer.init()
 
     def detect_motion(self, dt):
-        self.accel_obj.vehicle_moving()
-        self.accel_obj.vehicle_rotating()
-        status = self.accel_obj.moving or self.accel_obj.rotating
-        if self.mode == 'standby' and status and not self.system_status:
-            self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
-            self.system_status = status
+        try:
+            self.accel_obj.vehicle_moving()
+            self.accel_obj.vehicle_rotating()
+            status = self.accel_obj.moving or self.accel_obj.rotating
+            if self.mode == 'standby' and status and not self.system_status:
+                self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
+                self.system_status = status
+        except:
+            pass
 
     def switch_view(self, switch=None, auto=False):
         container = self.ids.monitor_body
