@@ -2,6 +2,7 @@
 import random
 import threading
 from kivymd.uix.button import MDIconButton
+from kivymd.uix.label import MDLabel
 from BSDS_firmware.blink_led import BlinkLED
 from BSDS_firmware.distant_manager import DistantManager
 from kivy.uix.widget import Widget
@@ -9,9 +10,24 @@ from kivy.properties import ObjectProperty, ListProperty, NumericProperty
 from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
+from kivy.uix.image import Image
+from kivy.graphics import Rectangle
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
+
+
+class BlindSpotObject(Widget):
+
+    def __init__(self, kind, coord, color, num_value):
+        super(BlindSpotObject, self).__init__()
+        obj = MDIconButton(icon=kind, center=coord, user_font_size="50sp",
+        theme_text_color="Custom", text_color=color)
+        self.add_widget(obj)
+        
+        self.add_widget(MDLabel(text="%.1fm away" % (float(num_value)/100),
+        theme_text_color="Custom", text_color=(1,1,1,1),
+        center=(obj.center_x + 10, obj.top)))
 
 
 class CanvasDrawing(Widget):
@@ -69,13 +85,32 @@ class CanvasDrawing(Widget):
 
         self.danger_zone_positions = []
         self.coord_matrix = None
-
+        
+        # Creating animated boundary
+        # self.create_boundary()
+        # self.bind(on_kv_post=self.update_boundary)
+        
         self.initialize_sensors()
 
-        Clock.schedule_interval(self.update_canvas, timeout=5)
+        Clock.schedule_interval(self.update_canvas, timeout=.5)
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
-        Clock.schedule_interval(self._sound_auditory_alert, timeout=1)
+        Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
+        
+    def update_texture(self, instance, value):
+        self.boundary.texture = value
+        
+    def update_boundary(self, instance, value):
+        self.boundary.pos = self.center_x - self.width * .2, self.center_y - self.height * .4
+        self.boundary.size = self.width*.4, self.height*.8
+        
+    def create_boundary(self):
+        boundary_img = Image(source="assets/boundary.gif")
+        boundary_img.bind(texture=self.update_texture)
+        boundary_pos = self.center_x - self.width * .2, self.center_y - self.height * .4
+        boundary_size = self.width*.4, self.height*.8
+        self.boundary = Rectangle(texture=boundary_img.texture, size=boundary_size, pos=boundary_pos)
+        self.canvas.add(self.boundary)
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -134,16 +169,16 @@ class CanvasDrawing(Widget):
             if data[i]:
                 if i == 'left':
                     self.left_sensor_value = data['left']
-                    point = self._coord_translator(data['left'], 'left'), data['left'][1]
+                    point = self._coord_translator(data['left'], 'left'), data['left'][1], data['left'][0]
                 elif i == 'bottom':
                     self.rear_sensor_value = data['bottom']
-                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1]
+                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1], data['bottom'][0]
                 elif i == 'right':
                     self.right_sensor_value = data['right']
-                    point = self._coord_translator(data['right'], 'right'), data['right'][1]
+                    point = self._coord_translator(data['right'], 'right'), data['right'][1], data['right'][0]
                 elif i == 'top':
                     self.front_sensor_value = data['top']
-                    point = self._coord_translator(data['top'], 'top'), data['top'][1]
+                    point = self._coord_translator(data['top'], 'top'), data['top'][1], data['top'][0]
 
         return point
 
@@ -302,13 +337,12 @@ class CanvasDrawing(Widget):
         m.add_thread(t)
         m.join_threads()
         coord = m.check_for_return_value()
-        print("The measured distance is: ", coord)
 
         if coord:
             self.add_object(kind='shield-alert-outline', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1],
-                            description=coord[1])
+                            description=coord[1], num_value=coord[2])
 
-    def add_object(self, kind, center, color, description='in', sensor_id='left-1'):
+    def add_object(self, kind, center, color, description='in', sensor_id='left-1', num_value=None):
         """
         :param sensor_id:
         :param description:
@@ -321,7 +355,7 @@ class CanvasDrawing(Widget):
         decision = self.is_another_object(location=object_info['location'], sensor_id=sensor_id)
         if decision[0]:
             self._remove_object(object_info, kind, decision)
-        self._add_object(kind, center, color, object_info, description, sensor_id)
+        self._add_object(kind, center, color, object_info, description, sensor_id, num_value=num_value)
 
     def _remove_object(self, object_info, kind, decision):
         orientation_count = 0
@@ -353,9 +387,9 @@ class CanvasDrawing(Widget):
         self.monitor_screen.number_of_detected_objects -= 1
         self.remove_widget(decision[-1])
 
-    def _add_object(self, kind, center, color, object_info, description, sensor_id):
-        obj = MDIconButton(icon=kind, center=center, user_font_size="50sp", theme_text_color="Custom",
-                           text_color=color)
+    def _add_object(self, kind, center, color, object_info, description, sensor_id, num_value=0):
+        obj = BlindSpotObject(kind=kind, coord=center, color=color, num_value=num_value)
+                           
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
             self.monitor_screen.detected_objects.append(self.object_kind[kind])
         if object_info['location'] not in self.monitor_screen.position_of_detected_objects:

@@ -34,11 +34,10 @@ class UltrasonicSensor:
         # save time of arrival
         while GPIO.input(self.GPIO_ECHO) == 1:
             stop_time = time.time()
+            if stop_time - start_time > .025:
+                return None
         # time difference between start and arrival
         t = stop_time - start_time
-        # multiply with the sonic speed (34300 cm/s)
-        # and divide by 2, because there and back
-        print("Measured Distance = %.1f cm" % ((t * 34300) / 2))
         return float("%.1f" % ((t * 34300) / 2))
 
     @staticmethod

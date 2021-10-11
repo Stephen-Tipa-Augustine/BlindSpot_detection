@@ -7,15 +7,16 @@ import time
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivymd.icon_definitions import md_icons
-from kivymd.uix.button import MDIconButton
 from BSDS_firmware.accelerometer import Accelerometer
 import pygame
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.list import TwoLineListItem
 
 
-class BlindSpotObject(MDIconButton):
-
+class MessageItem(BoxLayout):
+    
     def __init__(self, **kwargs):
-        super(BlindSpotObject, self).__init__(**kwargs)
+        super(MessageItem, self).__init__(**kwargs)
 
 
 class StandbyMode(BoxLayout):
@@ -93,7 +94,8 @@ class MonitorScreen(ScrollView):
             status = self.accel_obj.moving or self.accel_obj.rotating
             if self.mode == 'standby' and status and not self.system_status:
                 self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
-                self.system_status = status
+                self.system_status = True
+                self.ids.system_switch.active = True
         except:
             pass
 
@@ -106,8 +108,6 @@ class MonitorScreen(ScrollView):
         self._switch_view(switch=switch, container=container)
 
     def _switch_view(self, switch, container):
-        print('The system status is: ', self.system_status)
-        print('The switch status is: ', switch)
         if switch:
             container.add_widget(ActiveMode(monitor_screen=self))
             self.mode = 'active'
@@ -123,11 +123,11 @@ class MonitorScreen(ScrollView):
         elif disable and not self.mute:
             self.mute = True
         new_value = 0 if self.mute else value/100
-        print('New vol is: ', new_value)
         pygame.mixer.music.set_volume(new_value)
 
 
 class BSDSApp(MDApp):
+    dialog = None
     def build(self):
         self.theme_cls.theme_style = "Dark"
         SplashScreen.resize_window(400, 300)
@@ -137,6 +137,15 @@ class BSDSApp(MDApp):
         screen = Builder.load_file('root.kv')
 
         return screen
+        
+    def show_messages(self, *args):
+        if not self.dialog:
+            self.dialog = MDDialog(
+            title="Important messages!",
+            type="custom",
+            content_cls=MessageItem()
+            )
+        self.dialog.open()
 
 
 if __name__ == '__main__':

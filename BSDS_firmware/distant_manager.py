@@ -52,5 +52,6 @@ class DistantManager:
         m.add_thread(t)
         m.join_threads()
         result = m.check_for_return_value()
-        return {'left': (result, 'in' if result < REFERENCE_DISTANCE else 'out'), 'bottom': None,
+        return {'left': (result, 'in' if result < REFERENCE_DISTANCE else 'out') if result else None,
+        'bottom': None,
                 'right': None, 'top': None}
