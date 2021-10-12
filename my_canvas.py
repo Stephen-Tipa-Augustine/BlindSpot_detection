@@ -11,7 +11,6 @@ from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
 from kivy.uix.image import Image
-from kivy.graphics import Rectangle
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
@@ -22,12 +21,12 @@ class BlindSpotObject(Widget):
     def __init__(self, kind, coord, color, num_value):
         super(BlindSpotObject, self).__init__()
         obj = MDIconButton(icon=kind, center=coord, user_font_size="50sp",
-        theme_text_color="Custom", text_color=color)
+                           theme_text_color="Custom", text_color=color)
         self.add_widget(obj)
-        
-        self.add_widget(MDLabel(text="%.1fm away" % (float(num_value)/100),
-        theme_text_color="Custom", text_color=(1,1,1,1),
-        center=(obj.center_x + 10, obj.top)))
+
+        self.add_widget(MDLabel(text="%.1fm away" % (float(num_value) / 100),
+                                theme_text_color="Custom", text_color=(1, 1, 1, 1),
+                                center=(obj.center_x + 10, obj.top)))
 
 
 class CanvasDrawing(Widget):
@@ -64,6 +63,8 @@ class CanvasDrawing(Widget):
     object_size = NumericProperty(55.0)
     top_offset = NumericProperty(0)
 
+    boundary_texture = ObjectProperty(defaultvalue=Image(source="boundary.png").texture)
+
     def __init__(self, **kwargs):
         super(CanvasDrawing, self).__init__(**kwargs)
         self.pos_factors_x = [.1, .2, .25, .3]
@@ -72,12 +73,16 @@ class CanvasDrawing(Widget):
         self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human',
                             'shield-alert-outline': 'Unknown'}
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
+        self.boundary_images = ['assets/BSD_boundary_line-01.png', 'assets/BSD_boundary_line-02.png',
+                                'assets/BSD_boundary_line-03.png', 'assets/BSD_boundary_line-04.png',
+                                'assets/BSD_boundary_line-05.png', 'assets/BSD_boundary_line-06.png',
+                                'assets/BSD_boundary_line-07.png']
+        self.boundary_image_index = 0
 
         # initializing sensors
         self.left_led = None
         self.right_led = None
         self.distant_manager = None
-
         self.left_sensor_value = None
         self.rear_sensor_value = None
         self.right_sensor_value = None
@@ -85,32 +90,26 @@ class CanvasDrawing(Widget):
 
         self.danger_zone_positions = []
         self.coord_matrix = None
-        
+
         # Creating animated boundary
-        # self.create_boundary()
-        # self.bind(on_kv_post=self.update_boundary)
-        
+        self.bind(on_kv_post=lambda x, dt: Clock.schedule_interval(self.update_boundary_line, .333))
+
         self.initialize_sensors()
 
         Clock.schedule_interval(self.update_canvas, timeout=.5)
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
-        
-    def update_texture(self, instance, value):
-        self.boundary.texture = value
-        
-    def update_boundary(self, instance, value):
-        self.boundary.pos = self.center_x - self.width * .2, self.center_y - self.height * .4
-        self.boundary.size = self.width*.4, self.height*.8
-        
-    def create_boundary(self):
-        boundary_img = Image(source="assets/boundary.gif")
-        boundary_img.bind(texture=self.update_texture)
-        boundary_pos = self.center_x - self.width * .2, self.center_y - self.height * .4
-        boundary_size = self.width*.4, self.height*.8
-        self.boundary = Rectangle(texture=boundary_img.texture, size=boundary_size, pos=boundary_pos)
-        self.canvas.add(self.boundary)
+
+    def update_boundary_line(self, *args):
+        try:
+            self.boundary_texture = Image(source=self.boundary_images[self.boundary_image_index]).texture
+            if self.boundary_image_index == len(self.boundary_images) - 1:
+                self.boundary_image_index = 0
+            else:
+                self.boundary_image_index += 1
+        except:
+            pass
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -131,7 +130,7 @@ class CanvasDrawing(Widget):
             return False
         if len(self.danger_zone_positions) != 0 and pygame.mixer.music.get_busy() == 0:
             self.auditory_feedback()
-            
+
         if len(self.danger_zone_positions) == 0 and pygame.mixer.music.get_busy() == 1:
             pygame.mixer.music.stop()
 
@@ -339,7 +338,8 @@ class CanvasDrawing(Widget):
         coord = m.check_for_return_value()
 
         if coord:
-            self.add_object(kind='shield-alert-outline', center=coord[0], color=self.colors[0] if coord[1] == 'in' else self.colors[1],
+            self.add_object(kind='shield-alert-outline', center=coord[0],
+                            color=self.colors[0] if coord[1] == 'in' else self.colors[1],
                             description=coord[1], num_value=coord[2])
 
     def add_object(self, kind, center, color, description='in', sensor_id='left-1', num_value=None):
@@ -389,7 +389,7 @@ class CanvasDrawing(Widget):
 
     def _add_object(self, kind, center, color, object_info, description, sensor_id, num_value=0):
         obj = BlindSpotObject(kind=kind, coord=center, color=color, num_value=num_value)
-                           
+
         if self.object_kind[kind] not in self.monitor_screen.detected_objects:
             self.monitor_screen.detected_objects.append(self.object_kind[kind])
         if object_info['location'] not in self.monitor_screen.position_of_detected_objects:

@@ -30,18 +30,11 @@
         top_offset: monitor_label.height
         monitor_screen: root.monitor_screen
         canvas.before:
-            Color:
-                id: boundary_color
-                rgba: 0, 1, 0, 1
             Rectangle:
-                source: "boundary.png"
+                id: boundary_line
+                texture: graphics_canvas.boundary_texture
                 pos: self.center_x - self.width*.2, self.center_y - self.height*.4
                 size: self.width*.4, self.height*.8
-            #Line:
-            #   dash_length: 1
-            #    dash_offset: 10
-            #    width: 2
-            #    rectangle: (self.center_x - self.width*.2, self.center_y - self.height*.4, self.width*.4, self.height*.8)
         canvas.after:
             Color:
                 id: bus_color
