@@ -1,6 +1,7 @@
 <StandbyMode>:
     orientation: 'vertical'
     MDLabel:
+        on_kv_post: animation = Animation(pos_hint={'x': .9}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
         size_hint_y: .1
         id: monitor_label
         text: 'Standby Mode'
