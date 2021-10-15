@@ -1,18 +1,29 @@
 from mpu6050 import mpu6050
 import time
 import threading
+from kivy.clock import Clock
 
 
 class Accelerometer:
 
     def __init__(self, **kwargs):
-        self.sensor = mpu6050(0x68)
+        self.sensor = None
+        self.accel_data = None
+        self.gyro_data = None
+        Clock.schedule_interval(self.initialize, timeout=5)
         self.running = True
-        self.accel_data = self.get_accelerometer_data()
-        self.gyro_data = self.get_gyroscope_data()
         self.moving = False
         self.rotating = False
         # threading.Thread(target=self.run()).start()
+        
+    def initialize(self, *args):
+        try:
+            self.sensor = mpu6050(0x68)
+            self.accel_data = self.get_accelerometer_data()
+            self.gyro_data = self.get_gyroscope_data()
+            return False
+        except:
+            print('Failed to access the Accelerometer!')
 
     def get_accelerometer_data(self):
         return self.sensor.get_accel_data()
@@ -27,6 +38,8 @@ class Accelerometer:
         return self.sensor.get_all_data()
 
     def detect_state(self, data, state_kind='accel'):
+        if not self.sensor:
+            return False
         current_values = self.get_accelerometer_data() if state_kind == 'accel' else self.get_gyroscope_data()
         difference = {'x': abs(current_values['x'] - data['x']),
                       'y': abs(current_values['y'] - data['y']),

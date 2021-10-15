@@ -29,8 +29,8 @@ class BlinkLED:
     def clean_up():
         GPIO.cleanup()
 
-    def run(self):
-        if self.state:
+    def run(self, turn_off=False):
+        if self.state or turn_off:
             self.turn_off()
         else:
             self.turn_on()

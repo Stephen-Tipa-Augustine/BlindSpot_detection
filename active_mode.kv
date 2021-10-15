@@ -1,17 +1,20 @@
 #: import CanvasDrawing my_canvas.CanvasDrawing
+#: import Animation kivy.animation.Animation
 
 
 <ActiveMode>:
     orientation: 'vertical'
     MDLabel:
-        on_kv_post: animation = Animation(pos_hint={'x': .9}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
-        size_hint_y: .1
+        on_kv_post: animation = Animation(pos_hint={'x': .75}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
+        pos_hint: {'x': 0}
+        size: self.texture_size
         id: monitor_label
         text: 'Active Mode'
-        color: 1,1,1,1
-        font_size: 25
-        halign: 'center'
+        theme_text_color: "Primary"
+        font_style: 'H4'
         valign: 'center'
+        #halign: 'center'
+        size_hint_y: .1
     CanvasDrawing:
         id: graphics_canvas
         widget_width: self.width
@@ -33,7 +36,7 @@
         canvas.before:
             Rectangle:
                 id: boundary_line
-                texture: graphics_canvas.boundary_texture
+                source: 'boundary.png'
                 pos: self.center_x - self.width*.2, self.center_y - self.height*.4
                 size: self.width*.4, self.height*.8
         canvas.after:
@@ -46,4 +49,5 @@
         Label:
             center: root.center
             text: 'Bus'
-            font_size: 18
+            font_size: 30
+            theme_text_color: "Primary"

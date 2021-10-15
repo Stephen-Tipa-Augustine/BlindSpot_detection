@@ -1,14 +1,17 @@
+#: import Animation kivy.animation.Animation
+
 <StandbyMode>:
     orientation: 'vertical'
     MDLabel:
-        on_kv_post: animation = Animation(pos_hint={'x': .9}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
-        size_hint_y: .1
+        # on_kv_post: animation = Animation(pos_hint={'x': .8}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
+        pos_hint: {'x': 0}
+        size: self.texture_size
         id: monitor_label
         text: 'Standby Mode'
-        color: 1,1,1,1
-        font_size: 25
+        theme_text_color: "Primary"
+        font_style: 'H4'
+        size_hint_y: .1
         halign: 'center'
-        valign: 'center'
     MDBoxLayout:
         orientation: 'vertical'
         Label:
@@ -17,7 +20,7 @@
             pos_hint: {'center_y': 1, 'center_x': .5}
             user_font_size: "64sp"
             theme_text_color: "Custom"
-            text_color: 1,0,0,.6
+            text_color: 1,0,0,1
         MDLabel:
             text: 'System Currently Switched Off!'
             valign: 'top'

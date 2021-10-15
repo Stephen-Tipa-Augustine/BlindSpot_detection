@@ -11,6 +11,8 @@ from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
 from kivy.uix.image import Image
+from multiprocessing import Process, Lock, Queue
+import time
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
@@ -20,7 +22,7 @@ class BlindSpotObject(Widget):
 
     def __init__(self, kind, coord, color, num_value):
         super(BlindSpotObject, self).__init__()
-        obj = MDIconButton(icon=kind, center=coord, user_font_size="50sp",
+        obj = MDIconButton(icon=kind, center=coord, user_font_size="40sp",
                            theme_text_color="Custom", text_color=color)
         self.add_widget(obj)
 
@@ -63,7 +65,7 @@ class CanvasDrawing(Widget):
     object_size = NumericProperty(55.0)
     top_offset = NumericProperty(0)
 
-    boundary_texture = ObjectProperty(defaultvalue=Image(source="boundary.png").texture)
+    # boundary_texture = ObjectProperty(defaultvalue=Image(source="boundary.png").texture)
 
     def __init__(self, **kwargs):
         super(CanvasDrawing, self).__init__(**kwargs)
@@ -73,11 +75,11 @@ class CanvasDrawing(Widget):
         self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human',
                             'shield-alert-outline': 'Unknown'}
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
-        self.boundary_images = ['assets/BSD_boundary_line-01.png', 'assets/BSD_boundary_line-02.png',
-                                'assets/BSD_boundary_line-03.png', 'assets/BSD_boundary_line-04.png',
-                                'assets/BSD_boundary_line-05.png', 'assets/BSD_boundary_line-06.png',
-                                'assets/BSD_boundary_line-07.png']
+        self.boundary_images = []
         self.boundary_image_index = 0
+        self.image_queue = Queue()
+        
+        # Clock.schedule_once(self.create_textures, 2)
 
         # initializing sensors
         self.left_led = None
@@ -91,9 +93,6 @@ class CanvasDrawing(Widget):
         self.danger_zone_positions = []
         self.coord_matrix = None
 
-        # Creating animated boundary
-        self.bind(on_kv_post=lambda x, dt: Clock.schedule_interval(self.update_boundary_line, .333))
-
         self.initialize_sensors()
 
         Clock.schedule_interval(self.update_canvas, timeout=.5)
@@ -103,13 +102,37 @@ class CanvasDrawing(Widget):
 
     def update_boundary_line(self, *args):
         try:
-            self.boundary_texture = Image(source=self.boundary_images[self.boundary_image_index]).texture
+            self.boundary_texture = Image(source=self.boundary_images[self.boundary_image_index],
+            anim_delay=0, keep_data=True).texture
             if self.boundary_image_index == len(self.boundary_images) - 1:
                 self.boundary_image_index = 0
             else:
                 self.boundary_image_index += 1
         except:
             pass
+            
+    def create_textures(self, l, *args):
+        l = Lock()
+        Process(target=self.texture_process, args=(l, self.image_queue)).start()
+        Clock.schedule_interval(self.retrieve_textures, 1)
+        
+    def retrieve_textures(self, *args):
+        try:
+            values = self.image_queue.get(block=False)
+            if len(values) != 0:
+                self.boundary_images = values
+                Clock.schedule_interval(self.update_boundary_line, .33)
+                return False
+        except:
+            pass
+    
+    def texture_process(self, l, q):
+        img_paths = ['assets/BSD_boundary_line-01.png', 'assets/BSD_boundary_line-02.png',
+                                'assets/BSD_boundary_line-03.png', 'assets/BSD_boundary_line-04.png',
+                                'assets/BSD_boundary_line-05.png', 'assets/BSD_boundary_line-06.png',
+                                'assets/BSD_boundary_line-07.png']
+        time.sleep(4)
+        q.put(img_paths)
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -120,11 +143,7 @@ class CanvasDrawing(Widget):
         # self.right_led = BlinkLED()
 
     def _sound_auditory_alert(self, dt):
-        if self.monitor_screen is None:
-            if pygame.mixer.music.get_busy() == 1:
-                pygame.mixer.music.stop()
-            return False
-        if not self.monitor_screen.system_status:
+        if self.monitor_screen is None or not self.monitor_screen.system_status:
             if pygame.mixer.music.get_busy() == 1:
                 pygame.mixer.music.stop()
             return False
@@ -135,9 +154,11 @@ class CanvasDrawing(Widget):
             pygame.mixer.music.stop()
 
     def _blink_left_led(self, dt=1):
-        if self.monitor_screen is None:
-            return False
-        if not self.monitor_screen.system_status:
+        if self.monitor_screen is None or (self.monitor_screen is not None and not self.monitor_screen.system_status):
+            try:
+                self.left_led.turn_off()
+            except:
+                pass
             return False
         if 'Left' in self.danger_zone_positions:
             try:
@@ -145,19 +166,26 @@ class CanvasDrawing(Widget):
                 self.auditory_feedback()
             except AttributeError:
                 print('Failed to initialize LED')
+        elif self.left_led and 'Left' not in self.danger_zone_positions:
+            try:
+                self.left_led.turn_off()
+            except:
+                pass
 
     def _blink_right_led(self, dt):
-        if self.monitor_screen is None:
-            return False
-        if not self.monitor_screen.system_status:
+        if self.monitor_screen is None or (self.monitor_screen is not None and not self.monitor_screen.system_status):
+            try:
+                self.left_led.turn_off()
+            except:
+                pass
             return False
         if 'Right' in self.danger_zone_positions:
             try:
                 self.right_led.run()
             except AttributeError:
                 print('Failed to initialize LED')
-        elif self.right_led is not None and 'Right' not in self.danger_zone_positions:
-            self.right_led.stop()
+        elif self.right_led and 'Right' not in self.danger_zone_positions:
+            self.right_led.turn_off()
 
     def get_distance(self):
         return self._coord_mapper(self.distant_manager.run())

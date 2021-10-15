@@ -32,8 +32,9 @@
                 md_bg_color: 0.753,0.753,0.753,.4
                 MDLabel:
                     text: "System Status"
-                    theme_text_color: "Secondary"
+                    theme_text_color: "Primary"
                     size_hint_y: None
+                    font_style: 'H5'
                     height: self.texture_size[1]
                     halign: 'center'
                     valign: 'center'
@@ -46,15 +47,16 @@
                         id: system_status_label
                         valign: 'middle'
                         halign: 'center'
-                        # size_hint_y: .2
-                        theme_text_color: 'Primary'
-                        text_color: 1,1,1,.5
+                        theme_text_color: 'Custom'
+                        text_color: 1,.6,1,1
+                        font_style: 'H6'
+                        
                     MDSwitch:
                         id: system_switch
                         pos_hint: {'center_x': .5, 'center_y': .5}
                         active: False
                         size_hint_x: .4
-                        on_press: root.switch_view(switch=not self.active)
+                        on_press: root.switch_view(switch=not self.active); print('System switched!')
             MDCard:
                 orientation: "vertical"
                 padding: "8dp"
@@ -65,8 +67,9 @@
                 MDLabel:
                     id: detected_object_label
                     text: "Detected objects"
-                    theme_text_color: "Secondary"
+                    theme_text_color: "Primary"
                     size_hint_y: None
+                    font_style: 'H5'
                     height: self.texture_size[1]
                     halign: 'center'
                     valign: 'center'
@@ -77,9 +80,9 @@
                     text: 'None' if len(root.detected_objects) == 0 else ', '.join(root.detected_objects)
                     valign: 'middle'
                     halign: 'center'
-                    # size_hint_y: .2
-                    theme_text_color: 'Primary'
-                    text_color: 1,1,1,.5
+                    theme_text_color: 'Custom'
+                    text_color: 1,.6,1,1
+                    font_style: 'H6'
 
             MDCard:
                 orientation: "vertical"
@@ -91,9 +94,10 @@
                 MDLabel:
                     id: object_position_label
                     text: "Position of detected object"
-                    theme_text_color: "Secondary"
+                    theme_text_color: "Primary"
                     size_hint_y: None
                     height: self.texture_size[1]
+                    font_style: 'H5'
                     halign: 'center'
                     valign: 'center'
                 MDSeparator:
@@ -103,9 +107,9 @@
                     text: 'None' if len(root.position_of_detected_objects) == 0 else ', '.join(root.position_of_detected_objects)
                     valign: 'middle'
                     halign: 'center'
-                    # size_hint_y: .2
-                    theme_text_color: 'Primary'
-                    text_color: 1,1,1,.5
+                    theme_text_color: 'Custom'
+                    text_color: 1,.6,1,1
+                    font_style: 'H6'
             MDCard:
                 orientation: "vertical"
                 padding: "8dp"
@@ -116,7 +120,8 @@
                 MDLabel:
                     id: no_of_object_label
                     text: "No. of detected objects"
-                    theme_text_color: "Secondary"
+                    theme_text_color: "Primary"
+                    font_style: 'H5'
                     size_hint_y: None
                     height: self.texture_size[1]
                     halign: 'center'
@@ -128,9 +133,9 @@
                     text: '{}'.format(root.number_of_detected_objects)
                     valign: 'middle'
                     halign: 'center'
-                    # size_hint_y: .2
-                    theme_text_color: 'Primary'
-                    text_color: 1,1,1,.5
+                    theme_text_color: 'Custom'
+                    text_color: 1,.6,1,1
+                    font_style: 'H6'
 
             MDCard:
                 orientation: "vertical"
@@ -153,8 +158,9 @@
                     MDLabel:
                         text: 'Volume Control'
                         id: volume_control
-                        theme_text_color: 'Secondary'
+                        theme_text_color: "Primary"
                         text_color: 1,1,1,.5
+                        font_style: 'H5'
                         size_hint_y: None
                         height: self.texture_size[1]
                         halign: 'center'
@@ -167,7 +173,7 @@
                         MDIconButton:
                             icon: "volume-minus"
                             pos_hint: {'center_x': .2, 'center_y': .5}
-                            on_press: volume_controller.value -= 5; root.set_volume(volume_controller.value)
+                            on_press: volume_controller.value = volume_controller.value - 5 if volume_controller.value >= 5 else 0; root.set_volume(volume_controller.value)
                             size_hint_x: .4
 
                         Slider:
@@ -182,13 +188,14 @@
                         MDIconButton:
                             icon: "volume-plus"
                             pos_hint: {'center_x': .2, 'center_y': .5}
-                            on_press: volume_controller.value +=  5; root.set_volume(volume_controller.value)
+                            on_press: volume_controller.value =  volume_controller.value + 5 if volume_controller.value <= 95 else 100; root.set_volume(volume_controller.value)
                             size_hint_x: .4
 
                     MDLabel:
                         text: '{}%'.format(volume_controller.value)
                         valign: 'top'
                         halign: 'center'
-                        size_hint_y: .4
+                        size_hint_y: .9
                         theme_text_color: 'Custom'
                         text_color: 1,.6,1,1
+                        font_style: 'H5'

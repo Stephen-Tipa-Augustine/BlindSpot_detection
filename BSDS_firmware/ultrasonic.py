@@ -10,6 +10,7 @@ class UltrasonicSensor:
 
     def __init__(self, **kwargs):
         # GPIO Mode (BOARD / BCM)
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         # set GPIO Pins
         self.GPIO_TRIGGER = 18
