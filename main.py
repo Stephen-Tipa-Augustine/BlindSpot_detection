@@ -10,11 +10,11 @@ from kivymd.icon_definitions import md_icons
 from BSDS_firmware.accelerometer import Accelerometer
 import pygame
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import TwoLineListItem
+from multiprocessing import Process, Queue
 
 
 class MessageItem(BoxLayout):
-    
+
     def __init__(self, **kwargs):
         super(MessageItem, self).__init__(**kwargs)
 
@@ -82,16 +82,30 @@ class MonitorScreen(ScrollView):
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
-        self.accel_obj = Accelerometer()
-        Clock.schedule_interval(self.detect_motion, 10)
+        self.motion_queue = Queue()
+        Clock.schedule_once(self.initialize_accelerometer)
         self.mode = 'standby'
         pygame.mixer.init()
 
+    def initialize_accelerometer(self, *args):
+        Process(target=self.accelerometer_process, args=(self.motion_queue,)).start()
+        Clock.schedule_interval(self.detect_motion, 4)
+
+    def accelerometer_process(self, q, *args):
+        accel_obj = Accelerometer()
+        while True:
+            try:
+                accel_obj.vehicle_moving()
+                accel_obj.vehicle_rotating()
+                status = self.accel_obj.moving or self.accel_obj.rotating
+                q.put(status)
+                time.sleep(3)
+            except:
+                pass
+
     def detect_motion(self, dt):
         try:
-            self.accel_obj.vehicle_moving()
-            self.accel_obj.vehicle_rotating()
-            status = self.accel_obj.moving or self.accel_obj.rotating
+            status = self.motion_queue.get(block=False)
             if self.mode == 'standby' and status and not self.system_status:
                 self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
                 self.system_status = True
@@ -137,7 +151,7 @@ class BSDSApp(MDApp):
         screen = Builder.load_file('root.kv')
 
         return screen
-        
+
     def show_messages(self, *args):
         if not self.dialog:
             self.dialog = MDDialog(
