@@ -17,7 +17,7 @@ from object_detection.utils import visualization_utils as viz_utils
 from object_detection.builders import model_builder
 
 tf.get_logger().setLevel('ERROR')  # Suppress TensorFlow logging (2)
-DATA_DIR = os.path.join(os.getcwd(), 'data')
+DATA_DIR = os.path.join(os.getcwd(), 'tmp_data')
 MODELS_DIR = os.path.join(DATA_DIR, 'models')
 for dir in [DATA_DIR, MODELS_DIR]:
     if not os.path.exists(dir):
@@ -185,6 +185,7 @@ class ObjectDetectionModel:
             # Display output
             if q:
                 q.put(detected_objects)
+            print('Objects: ', detected_objects)
 
 
 if __name__ == '__main__':
