@@ -1,7 +1,5 @@
 from mpu6050 import mpu6050
 import time
-import threading
-from kivy.clock import Clock
 
 
 class Accelerometer:
@@ -10,11 +8,10 @@ class Accelerometer:
         self.sensor = None
         self.accel_data = None
         self.gyro_data = None
-        Clock.schedule_interval(self.initialize, timeout=5)
         self.running = True
         self.moving = False
         self.rotating = False
-        # threading.Thread(target=self.run()).start()
+        self.initialize()
         
     def initialize(self, *args):
         try:
