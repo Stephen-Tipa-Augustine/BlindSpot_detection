@@ -11,7 +11,7 @@ from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
 from kivy.uix.image import Image
-from multiprocessing import Process, Lock, Queue
+import queue
 import time
 
 # definition of constants
@@ -65,8 +65,6 @@ class CanvasDrawing(Widget):
     object_size = NumericProperty(55.0)
     top_offset = NumericProperty(0)
 
-    # boundary_texture = ObjectProperty(defaultvalue=Image(source="boundary.png").texture)
-
     def __init__(self, **kwargs):
         super(CanvasDrawing, self).__init__(**kwargs)
         self.pos_factors_x = [.1, .2, .25, .3]
@@ -77,9 +75,7 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
-        self.image_queue = Queue()
-        
-        # Clock.schedule_once(self.create_textures, 2)
+        self.distance_queue = queue.Queue()
 
         # initializing sensors
         self.left_led = None
@@ -100,42 +96,9 @@ class CanvasDrawing(Widget):
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
 
-    def update_boundary_line(self, *args):
-        try:
-            self.boundary_texture = Image(source=self.boundary_images[self.boundary_image_index],
-            anim_delay=0, keep_data=True).texture
-            if self.boundary_image_index == len(self.boundary_images) - 1:
-                self.boundary_image_index = 0
-            else:
-                self.boundary_image_index += 1
-        except:
-            pass
-            
-    def create_textures(self, l, *args):
-        l = Lock()
-        Process(target=self.texture_process, args=(l, self.image_queue)).start()
-        Clock.schedule_interval(self.retrieve_textures, 1)
-        
-    def retrieve_textures(self, *args):
-        try:
-            values = self.image_queue.get(block=False)
-            if len(values) != 0:
-                self.boundary_images = values
-                Clock.schedule_interval(self.update_boundary_line, .33)
-                return False
-        except:
-            pass
-    
-    def texture_process(self, l, q):
-        img_paths = ['assets/BSD_boundary_line-01.png', 'assets/BSD_boundary_line-02.png',
-                                'assets/BSD_boundary_line-03.png', 'assets/BSD_boundary_line-04.png',
-                                'assets/BSD_boundary_line-05.png', 'assets/BSD_boundary_line-06.png',
-                                'assets/BSD_boundary_line-07.png']
-        time.sleep(4)
-        q.put(img_paths)
-
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
+        threading.Thread(target=self.distant_manager.run, args=(self.distance_queue,), daemon=True).start()
         self.left_led = BlinkLED()
         # Loading sound
         pygame.mixer.init()
@@ -188,7 +151,9 @@ class CanvasDrawing(Widget):
             self.right_led.turn_off()
 
     def get_distance(self):
-        return self._coord_mapper(self.distant_manager.run())
+        if not self.distance_queue.empty():
+            distance = self.distance_queue.get(block=False)
+            return self._coord_mapper(distance)
 
     def _coord_mapper(self, data):
         point = None
@@ -358,12 +323,7 @@ class CanvasDrawing(Widget):
             self.coord_matrix = self._generate_coord_matrix()
             return
 
-        m = ThreadManager()
-        t = threading.Thread(target=lambda q: q.put(self.get_distance()), args=(m.que,))
-        t.start()
-        m.add_thread(t)
-        m.join_threads()
-        coord = m.check_for_return_value()
+        coord = self.get_distance()
 
         if coord:
             self.add_object(kind='shield-alert-outline', center=coord[0],

@@ -13,7 +13,6 @@
         theme_text_color: "Primary"
         font_style: 'H4'
         valign: 'center'
-        #halign: 'center'
         size_hint_y: .1
     CanvasDrawing:
         id: graphics_canvas
@@ -36,7 +35,7 @@
         canvas.before:
             Rectangle:
                 id: boundary_line
-                source: 'boundary.png'
+                source: 'assets/boundary.png'
                 pos: self.center_x - self.width*.2, self.center_y - self.height*.4
                 size: self.width*.4, self.height*.8
         canvas.after:

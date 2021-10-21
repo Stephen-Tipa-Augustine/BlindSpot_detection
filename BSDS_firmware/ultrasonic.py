@@ -35,8 +35,6 @@ class UltrasonicSensor:
         # save time of arrival
         while GPIO.input(self.GPIO_ECHO) == 1:
             stop_time = time.time()
-            if stop_time - start_time > .025:
-                return None
         # time difference between start and arrival
         t = stop_time - start_time
         return float("%.1f" % ((t * 34300) / 2))
@@ -46,14 +44,7 @@ class UltrasonicSensor:
         GPIO.cleanup()
 
     def run(self):
-        m = ThreadManager()
-        t = threading.Thread(target=lambda q: q.put(self.compute_distance()), args=(m.que, ))
-        t.start()
-        m.add_thread(t)
-        m.join_threads()
-        distance = m.check_for_return_value()
-        # print("Measured Distance = %f cm" % distance)
-        return distance
+        return self.compute_distance()
 
     def stop(self):
         self.running = False

@@ -1,5 +1,5 @@
 from kivy.lang import Builder
-from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty, NumericProperty
+from kivy.properties import ObjectProperty, BooleanProperty, ListProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
@@ -10,7 +10,8 @@ from kivymd.icon_definitions import md_icons
 from BSDS_firmware.accelerometer import Accelerometer
 import pygame
 from kivymd.uix.dialog import MDDialog
-from multiprocessing import Process, Queue
+import threading
+import queue
 
 
 class MessageItem(BoxLayout):
@@ -82,13 +83,13 @@ class MonitorScreen(ScrollView):
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
-        self.motion_queue = Queue()
+        self.motion_queue = queue.Queue()
         Clock.schedule_once(self.initialize_accelerometer)
         self.mode = 'standby'
         pygame.mixer.init()
 
     def initialize_accelerometer(self, *args):
-        Process(target=self.accelerometer_process, args=(self.motion_queue,)).start()
+        threading.Thread(target=self.accelerometer_process, args=(self.motion_queue,), daemon=True).start()
         Clock.schedule_interval(self.detect_motion, 4)
 
     def accelerometer_process(self, q, *args):
@@ -104,13 +105,13 @@ class MonitorScreen(ScrollView):
                 pass
 
     def detect_motion(self, dt):
-        try:
+        if not self.motion_queue.empty():
             status = self.motion_queue.get(block=False)
             if self.mode == 'standby' and status and not self.system_status:
                 self.switch_view(switch=self.accel_obj.moving or self.accel_obj.rotating, auto=True)
                 self.system_status = True
                 self.ids.system_switch.active = True
-        except:
+        else:
             pass
 
     def switch_view(self, switch=None, auto=False):
