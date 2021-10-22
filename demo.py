@@ -3,7 +3,6 @@ from kivy.uix.screenmanager import Screen
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRectangleFlatButton
 from multiprocessing import Process, Queue, set_start_method, freeze_support
-from detect_object import ObjectDetectionModel
 from kivy.clock import Clock
 import threading
 import queue
@@ -28,7 +27,7 @@ class MainApp(MDApp):
 
     def start_object_detection(self, *args):
         self.objects = queue.Queue()
-        threading.Thread(target=ObjectDetectionModel().run, args=(self.objects,), daemon=True).start()
+        # threading.Thread(target=ObjectDetectionModel().run, args=(self.objects,), daemon=True).start()
         Clock.schedule_interval(self.get_objects, 2)
 
     def get_objects(self, *args):
