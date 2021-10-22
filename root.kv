@@ -1,6 +1,5 @@
 #: include monitor.kv
 #: include splash.kv
-#: import Animation kivy.animation.Animation
 
 <MessageItem>:
     MDLabel:
@@ -23,7 +22,6 @@ ScreenManager:
         BoxLayout:
             orientation: 'vertical'
             MDToolbar:
-                on_kv_post: animation = Animation(specific_text_color=(0,1,1,1), duration=2.)+Animation(specific_text_color=(1,1,1,1), duration=2.); animation.repeat = True; animation.start(self)
                 title: "Blind Spot Detection and Monitoring System"
                 elevation: 10
                 theme_text_color:  "Custom"

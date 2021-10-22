@@ -1,18 +1,17 @@
 #: import CanvasDrawing my_canvas.CanvasDrawing
-#: import Animation kivy.animation.Animation
 
 
 <ActiveMode>:
     orientation: 'vertical'
     MDLabel:
-        on_kv_post: animation = Animation(pos_hint={'x': .75}, duration=3.)+Animation(pos_hint={'x': 0}, duration=3.); animation.repeat = True; animation.start(self)
         pos_hint: {'x': 0}
         size: self.texture_size
         id: monitor_label
-        text: 'Active Mode'
+        text: 'Monitoring Mode'
         theme_text_color: "Primary"
         font_style: 'H4'
         valign: 'center'
+        halign: 'center'
         size_hint_y: .1
     CanvasDrawing:
         id: graphics_canvas

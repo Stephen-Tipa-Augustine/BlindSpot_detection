@@ -84,7 +84,8 @@ class MonitorScreen(ScrollView):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
         self.motion_queue = queue.Queue()
-        Clock.schedule_once(self.initialize_accelerometer, 2)
+        Clock.schedule_once(self.initialize_accelerometer, 5
+        )
         self.mode = 'standby'
         pygame.mixer.init()
 
@@ -95,14 +96,14 @@ class MonitorScreen(ScrollView):
     def accelerometer_process(self, q):
         accel_obj = Accelerometer()
         while True:
-            try:
+            if accel_obj.sensor:
                 accel_obj.vehicle_moving()
                 accel_obj.vehicle_rotating()
                 status = accel_obj.moving or accel_obj.rotating
                 q.put(status)
                 time.sleep(3)
-            except:
-                time.sleep(3)
+            else:
+                accel_obj = Accelerometer()
 
     def detect_motion(self, dt):
         if not self.motion_queue.empty():

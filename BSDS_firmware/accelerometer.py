@@ -23,21 +23,39 @@ class Accelerometer:
             print('Failed to access the Accelerometer!')
 
     def get_accelerometer_data(self):
-        return self.sensor.get_accel_data()
+        try:
+            return self.sensor.get_accel_data()
+        except OSError as e:
+            print('Loose connections to the accelerometer')
+            return None
 
     def get_gyroscope_data(self):
-        return self.sensor.get_gyro_data()
+        try:
+            return self.sensor.get_gyro_data()
+        except OSError as e:
+            print('Loose connections to the accelerometer')
+            return None
 
     def get_temperature(self):
-        return self.sensor.get_temp()
+        try:
+            return self.sensor.get_temp()
+        except OSError as e:
+            print('Loose connections to the accelerometer')
+            return None
 
     def get_all_data(self):
-        return self.sensor.get_all_data()
+        try:
+            return self.sensor.get_all_data()
+        except OSError as e:
+            print('Loose connections to the accelerometer')
+            return None
 
     def detect_state(self, data, state_kind='accel'):
-        if not self.sensor:
+        accel_data  = self.get_accelerometer_data()
+        gyro_data = self.get_gyroscope_data()
+        if not self.sensor or not accel_data or not gyro_data or not data:
             return False
-        current_values = self.get_accelerometer_data() if state_kind == 'accel' else self.get_gyroscope_data()
+        current_values = accel_data if state_kind == 'accel' else gyro_data
         difference = {'x': abs(current_values['x'] - data['x']),
                       'y': abs(current_values['y'] - data['y']),
                       'z': abs(current_values['z'] - data['z'])}
