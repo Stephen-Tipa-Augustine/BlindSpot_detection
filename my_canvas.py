@@ -78,7 +78,7 @@ class CanvasDrawing(Widget):
         self.boundary_images = []
         self.boundary_image_index = 0
         self.image_queue = Queue()
-        
+
         # Clock.schedule_once(self.create_textures, 2)
 
         # initializing sensors
@@ -100,43 +100,10 @@ class CanvasDrawing(Widget):
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
 
-    def update_boundary_line(self, *args):
-        try:
-            self.boundary_texture = Image(source=self.boundary_images[self.boundary_image_index],
-            anim_delay=0, keep_data=True).texture
-            if self.boundary_image_index == len(self.boundary_images) - 1:
-                self.boundary_image_index = 0
-            else:
-                self.boundary_image_index += 1
-        except:
-            pass
-            
-    def create_textures(self, l, *args):
-        l = Lock()
-        Process(target=self.texture_process, args=(l, self.image_queue)).start()
-        Clock.schedule_interval(self.retrieve_textures, 1)
-        
-    def retrieve_textures(self, *args):
-        try:
-            values = self.image_queue.get(block=False)
-            if len(values) != 0:
-                self.boundary_images = values
-                Clock.schedule_interval(self.update_boundary_line, .33)
-                return False
-        except:
-            pass
-    
-    def texture_process(self, l, q):
-        img_paths = ['assets/BSD_boundary_line-01.png', 'assets/BSD_boundary_line-02.png',
-                                'assets/BSD_boundary_line-03.png', 'assets/BSD_boundary_line-04.png',
-                                'assets/BSD_boundary_line-05.png', 'assets/BSD_boundary_line-06.png',
-                                'assets/BSD_boundary_line-07.png']
-        time.sleep(4)
-        q.put(img_paths)
-
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
-        self.left_led = BlinkLED()
+        self.left_led = BlinkLED(cathode=5)
+        self.right_led = BlinkLED(cathode=6)
         # Loading sound
         pygame.mixer.init()
         pygame.mixer.music.load('assets/BSD_alert.wav')
@@ -176,6 +143,7 @@ class CanvasDrawing(Widget):
         if self.monitor_screen is None or (self.monitor_screen is not None and not self.monitor_screen.system_status):
             try:
                 self.left_led.turn_off()
+                self.auditory_feedback()
             except:
                 pass
             return False
@@ -185,7 +153,10 @@ class CanvasDrawing(Widget):
             except AttributeError:
                 print('Failed to initialize LED')
         elif self.right_led and 'Right' not in self.danger_zone_positions:
-            self.right_led.turn_off()
+            try:
+                self.right_led.turn_off()
+            except:
+                pass
 
     def get_distance(self):
         return self._coord_mapper(self.distant_manager.run())

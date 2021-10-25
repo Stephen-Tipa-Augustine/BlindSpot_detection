@@ -1,3 +1,5 @@
+import sys
+
 from kivy.lang import Builder
 from kivy.properties import ObjectProperty, BooleanProperty, ListProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
@@ -12,6 +14,8 @@ import pygame
 from kivymd.uix.dialog import MDDialog
 import threading
 import queue
+
+from detect_object import DetectionModel
 
 
 class MessageItem(BoxLayout):
@@ -79,13 +83,14 @@ class MonitorScreen(ScrollView):
     detected_objects = ListProperty(defaultvalue=[])
     number_of_detected_objects = NumericProperty(defaultvalue=0)
     position_of_detected_objects = ListProperty(defaultvalue=[])
+    app_window = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(MonitorScreen, self).__init__(**kwargs)
         # initialize accelerometer "MPU6050"
         self.motion_queue = queue.Queue()
-        Clock.schedule_once(self.initialize_accelerometer, 5
-        )
+        Clock.schedule_once(self.initialize_accelerometer, 5)
+        Clock.schedule_interval(self.get_objects, 2)
         self.mode = 'standby'
         pygame.mixer.init()
 
@@ -93,7 +98,14 @@ class MonitorScreen(ScrollView):
         threading.Thread(target=self.accelerometer_process, args=(self.motion_queue,), daemon=True).start()
         Clock.schedule_interval(self.detect_motion, 2)
 
-    def accelerometer_process(self, q):
+    def get_objects(self, *args):
+        if not self.app_window.left_object_detector.empty():
+            print('Detected: ', self.app_window.left_object_detector.get(block=False))
+        else:
+            print('Got nothing!')
+
+    @staticmethod
+    def accelerometer_process(q):
         accel_obj = Accelerometer()
         while True:
             if accel_obj.sensor:
@@ -138,12 +150,15 @@ class MonitorScreen(ScrollView):
             self.mute = False
         elif disable and not self.mute:
             self.mute = True
-        new_value = 0 if self.mute else value/100
+        new_value = 0 if self.mute else value / 100
         pygame.mixer.music.set_volume(new_value)
 
 
 class BSDSApp(MDApp):
     dialog = None
+    left_object_detector = ObjectProperty(defaultvalue=queue.Queue())
+    detection_model_left = DetectionModel()
+
     def build(self):
         self.theme_cls.theme_style = "Dark"
         SplashScreen.resize_window(400, 300)
@@ -154,12 +169,15 @@ class BSDSApp(MDApp):
 
         return screen
 
+    def initialize_object_detectors(self):
+        threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
+
     def show_messages(self, *args):
         if not self.dialog:
             self.dialog = MDDialog(
-            title="Important messages!",
-            type="custom",
-            content_cls=MessageItem()
+                title="Important messages!",
+                type="custom",
+                content_cls=MessageItem()
             )
         self.dialog.open()
 

@@ -8,13 +8,13 @@ from .helpers import ThreadManager
 
 class UltrasonicSensor:
 
-    def __init__(self, **kwargs):
+    def __init__(self, trigger, echo, **kwargs):
         # GPIO Mode (BOARD / BCM)
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         # set GPIO Pins
-        self.GPIO_TRIGGER = 18
-        self.GPIO_ECHO = 24
+        self.GPIO_TRIGGER = trigger
+        self.GPIO_ECHO = echo
         # set GPIO direction (IN / OUT)
         GPIO.setup(self.GPIO_TRIGGER, GPIO.OUT)
         GPIO.setup(self.GPIO_ECHO, GPIO.IN)

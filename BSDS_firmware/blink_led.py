@@ -5,12 +5,12 @@ import time
 
 class BlinkLED:
 
-    def __init__(self, **kwargs):
+    def __init__(self, cathode, **kwargs):
         # GPIO Mode (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # set GPIO Pins
-        self.GPIO_LED = 25
+        self.GPIO_LED = cathode
 
         # set GPIO direction (IN / OUT)
         GPIO.setup(self.GPIO_LED, GPIO.OUT)
