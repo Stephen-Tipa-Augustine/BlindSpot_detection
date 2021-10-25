@@ -77,9 +77,6 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
-        self.image_queue = Queue()
-
-        # Clock.schedule_once(self.create_textures, 2)
 
         # initializing sensors
         self.left_led = None

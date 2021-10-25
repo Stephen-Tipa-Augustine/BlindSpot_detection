@@ -14,8 +14,8 @@ import pygame
 from kivymd.uix.dialog import MDDialog
 import threading
 import queue
-
-from detect_object import DetectionModel
+import sys
+import RPi.GPIO as GPIO
 
 
 class MessageItem(BoxLayout):
@@ -90,7 +90,7 @@ class MonitorScreen(ScrollView):
         # initialize accelerometer "MPU6050"
         self.motion_queue = queue.Queue()
         Clock.schedule_once(self.initialize_accelerometer, 5)
-        Clock.schedule_interval(self.get_objects, 2)
+        # Clock.schedule_interval(self.get_objects, 2)
         self.mode = 'standby'
         pygame.mixer.init()
 
@@ -156,8 +156,8 @@ class MonitorScreen(ScrollView):
 
 class BSDSApp(MDApp):
     dialog = None
-    left_object_detector = ObjectProperty(defaultvalue=queue.Queue())
-    detection_model_left = DetectionModel()
+    # left_object_detector = ObjectProperty(defaultvalue=queue.Queue())
+    # detection_model_left = DetectionModel()
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
@@ -168,18 +168,13 @@ class BSDSApp(MDApp):
         screen = Builder.load_file('root.kv')
 
         return screen
+        
+    def on_stop(self):
+        GPIO.cleanup()
+        sys.exit(0)
 
-    def initialize_object_detectors(self):
-        threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
-
-    def show_messages(self, *args):
-        if not self.dialog:
-            self.dialog = MDDialog(
-                title="Important messages!",
-                type="custom",
-                content_cls=MessageItem()
-            )
-        self.dialog.open()
+    # def initialize_object_detectors(self):
+    #     threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
 
 
 if __name__ == '__main__':
