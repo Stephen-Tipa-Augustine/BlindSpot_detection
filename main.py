@@ -1,20 +1,17 @@
 import sys
 
 from kivy.lang import Builder
-from kivy.properties import ObjectProperty, BooleanProperty, ListProperty, NumericProperty
+from kivy.properties import ObjectProperty, BooleanProperty, ListProperty, NumericProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
 import time
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivymd.icon_definitions import md_icons
 from BSDS_firmware.accelerometer import Accelerometer
 import pygame
-from kivymd.uix.dialog import MDDialog
 import threading
 import queue
-import sys
 import RPi.GPIO as GPIO
 
 
@@ -83,6 +80,14 @@ class MonitorScreen(ScrollView):
     detected_objects = ListProperty(defaultvalue=[])
     number_of_detected_objects = NumericProperty(defaultvalue=0)
     position_of_detected_objects = ListProperty(defaultvalue=[])
+    category_based_numbers = DictProperty(
+        defaultvalue={
+            'Bus': 0,
+            'Bike': 0,
+            'Human': 0,
+            'Unknown': 0,
+        }
+    )
     app_window = ObjectProperty()
 
     def __init__(self, **kwargs):
@@ -168,7 +173,7 @@ class BSDSApp(MDApp):
         screen = Builder.load_file('root.kv')
 
         return screen
-        
+
     def on_stop(self):
         GPIO.cleanup()
         sys.exit(0)

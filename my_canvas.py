@@ -72,7 +72,7 @@ class CanvasDrawing(Widget):
         self.pos_factors_x = [.1, .2, .25, .3]
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
-        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'human',
+        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'Human',
                             'shield-alert-outline': 'Unknown'}
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
@@ -340,6 +340,7 @@ class CanvasDrawing(Widget):
 
     def add_object(self, kind, center, color, description='in', sensor_id='left-1', num_value=None):
         """
+        :param num_value:
         :param sensor_id:
         :param description:
         :param center:
@@ -381,6 +382,7 @@ class CanvasDrawing(Widget):
             del self.added_objects[object_info['location']][decision[1]]
 
         self.monitor_screen.number_of_detected_objects -= 1
+        self.monitor_screen.category_based_numbers[self.object_kind[kind]] -= 1
         self.remove_widget(decision[-1])
 
     def _add_object(self, kind, center, color, object_info, description, sensor_id, num_value=0):
@@ -395,6 +397,7 @@ class CanvasDrawing(Widget):
             self.danger_zone_positions.append(object_info['location'])
 
         self.monitor_screen.number_of_detected_objects += 1
+        self.monitor_screen.category_based_numbers[self.object_kind[kind]] += 1
         self.add_widget(obj)
         self.added_objects[object_info['location']].append({'ref': obj, 'pos': center,
                                                             'orientation': object_info['location'],

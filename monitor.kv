@@ -50,7 +50,7 @@
                         theme_text_color: 'Custom'
                         text_color: 1,.6,1,1
                         font_style: 'H6'
-                        
+
                     MDSwitch:
                         id: system_switch
                         pos_hint: {'center_x': .5, 'center_y': .5}
@@ -77,7 +77,7 @@
                     height: "1dp"
                 MDLabel:
                     id: detected_object
-                    text: 'None' if len(root.detected_objects) == 0 else ', '.join(root.detected_objects)
+                    text: 'None' if len(root.detected_objects) == 0 else ', '.join(['{}:[{}]'.format(i, root.category_based_numbers[i]) for i in root.detected_objects])
                     valign: 'middle'
                     halign: 'center'
                     theme_text_color: 'Custom'
