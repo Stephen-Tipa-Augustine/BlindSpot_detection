@@ -13,6 +13,7 @@ import pygame
 import threading
 import queue
 import RPi.GPIO as GPIO
+from optimized_detector import ObjectDetectionModel
 
 
 class MessageItem(BoxLayout):
@@ -95,7 +96,7 @@ class MonitorScreen(ScrollView):
         # initialize accelerometer "MPU6050"
         self.motion_queue = queue.Queue()
         Clock.schedule_once(self.initialize_accelerometer, 5)
-        # Clock.schedule_interval(self.get_objects, 2)
+        Clock.schedule_interval(self.get_objects, 2)
         self.mode = 'standby'
         pygame.mixer.init()
 
@@ -161,8 +162,8 @@ class MonitorScreen(ScrollView):
 
 class BSDSApp(MDApp):
     dialog = None
-    # left_object_detector = ObjectProperty(defaultvalue=queue.Queue())
-    # detection_model_left = DetectionModel()
+    left_object_detector = ObjectProperty(defaultvalue=queue.Queue())
+    detection_model_left = ObjectDetectionModel()
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
@@ -171,15 +172,17 @@ class BSDSApp(MDApp):
         Window.allow_screensaver = True
 
         screen = Builder.load_file('root.kv')
+        Clock.schedule_once(self.initialize_object_detectors, 1)
 
         return screen
 
     def on_stop(self):
         GPIO.cleanup()
+        self.detection_model_left.cleanup()
         sys.exit(0)
 
-    # def initialize_object_detectors(self):
-    #     threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
+    def initialize_object_detectors(self):
+        threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
 
 
 if __name__ == '__main__':
