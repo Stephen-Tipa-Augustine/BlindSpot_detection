@@ -132,8 +132,15 @@ class ObjectDetectionModel:
                 if (scores[i] > min_conf_threshold) and (scores[i] <= 1.0):
                     # Draw label
                     object_name = labels[int(classes[i])]  # Look up object name from "labels" array using class index
-                    label = {'name': object_name, 'score': int(scores[i] * 100)}
-                    display_str.append(label)
+                    if object_name in ('bus', 'truck', 'car'):
+                        label = 'car'
+                        display_str.append(label)
+                    elif object_name in ('bicycle', 'motorcycle'):
+                        label = 'motorbike'
+                        display_str.append(label)
+                    elif object_name == 'person':
+                        label = 'human-handsdown'
+                        display_str.append(label)
 
             if q:
                 q.queue.clear()

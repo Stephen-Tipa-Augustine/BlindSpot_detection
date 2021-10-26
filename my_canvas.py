@@ -14,7 +14,6 @@ import pygame
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
-OBJECT_CATEGORIES = ('person', 'bicycle', 'motorcycle', 'bus', 'truck', 'car')
 
 
 class BlindSpotObject(Widget):
@@ -77,6 +76,12 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
+        self.object_identity = {
+            'left': 'shield-alert-outline',
+            'bottom': 'shield-alert-outline',
+            'right': 'shield-alert-outline',
+            'top': 'shield-alert-outline',
+        }
 
         # initializing sensors
         self.left_led = None
@@ -108,7 +113,9 @@ class CanvasDrawing(Widget):
 
     def get_objects(self, *args):
         if not self.app_window.left_object_detector.empty():
-            print('Detected: ', self.app_window.left_object_detector.get(block=False))
+            objects = self.app_window.left_object_detector.get(block=False)
+            if len(objects) != 0:
+                self.object_identity['right'] = objects[0]
         else:
             print('Got nothing!')
 
@@ -170,16 +177,16 @@ class CanvasDrawing(Widget):
             if data[i]:
                 if i == 'left':
                     self.left_sensor_value = data['left']
-                    point = self._coord_translator(data['left'], 'left'), data['left'][1], data['left'][0]
+                    point = self._coord_translator(data['left'], 'left'), data['left'][1], data['left'][0], i
                 elif i == 'bottom':
                     self.rear_sensor_value = data['bottom']
-                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1], data['bottom'][0]
+                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1], data['bottom'][0], i
                 elif i == 'right':
                     self.right_sensor_value = data['right']
-                    point = self._coord_translator(data['right'], 'right'), data['right'][1], data['right'][0]
+                    point = self._coord_translator(data['right'], 'right'), data['right'][1], data['right'][0], i
                 elif i == 'top':
                     self.front_sensor_value = data['top']
-                    point = self._coord_translator(data['top'], 'top'), data['top'][1], data['top'][0]
+                    point = self._coord_translator(data['top'], 'top'), data['top'][1], data['top'][0], i
 
         return point
 
@@ -340,11 +347,11 @@ class CanvasDrawing(Widget):
         coord = m.check_for_return_value()
 
         if coord:
-            self.add_object(kind='shield-alert-outline', center=coord[0],
+            self.add_object(kind=self.object_identity[coord[3]], center=coord[0],
                             color=self.colors[0] if coord[1] == 'in' else self.colors[1],
-                            description=coord[1], num_value=coord[2])
+                            description=coord[1], num_value=coord[2], sensor_id=coord[3])
 
-    def add_object(self, kind, center, color, description='in', sensor_id='left-1', num_value=None):
+    def add_object(self, kind, center, color, description='in', sensor_id='left', num_value=None):
         """
         :param num_value:
         :param sensor_id:
