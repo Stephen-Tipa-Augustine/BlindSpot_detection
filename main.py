@@ -83,7 +83,7 @@ class MonitorScreen(ScrollView):
     position_of_detected_objects = ListProperty(defaultvalue=[])
     category_based_numbers = DictProperty(
         defaultvalue={
-            'Bus': 0,
+            'Car': 0,
             'Bike': 0,
             'Human': 0,
             'Unknown': 0,

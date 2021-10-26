@@ -339,9 +339,9 @@ class CanvasDrawing(Widget):
             self.create_coord()
             # creat coordinate matrix
             self.coord_matrix = self._generate_coord_matrix()
-            
+
             self.monitor_screen.category_based_numbers = {
-                'Bus': 0,
+                'Car': 0,
                 'Bike': 0,
                 'Human': 0,
                 'Unknown': 0,
