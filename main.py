@@ -181,7 +181,7 @@ class BSDSApp(MDApp):
         self.detection_model_left.cleanup()
         sys.exit(0)
 
-    def initialize_object_detectors(self):
+    def initialize_object_detectors(self, *args):
         threading.Thread(target=self.detection_model_left.run, args=(self.left_object_detector,), daemon=True).start()
 
 

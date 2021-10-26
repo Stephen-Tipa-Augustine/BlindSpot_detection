@@ -10,12 +10,11 @@ from kivy.properties import ObjectProperty, ListProperty, NumericProperty
 from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
-from kivy.uix.image import Image
-from multiprocessing import Process, Lock, Queue
-import time
+
 
 # definition of constants
 from BSDS_firmware.distant_manager import REFERENCE_DISTANCE
+OBJECT_CATEGORIES = ('person', 'bicycle', 'motorcycle', 'bus', 'truck', 'car')
 
 
 class BlindSpotObject(Widget):
@@ -33,6 +32,7 @@ class BlindSpotObject(Widget):
 
 class CanvasDrawing(Widget):
     monitor_screen = ObjectProperty(None)
+    app_window = ObjectProperty()
     widget_width = NumericProperty(0)
     widget_height = NumericProperty(0)
     widget_center_x = NumericProperty(0)
@@ -105,6 +105,12 @@ class CanvasDrawing(Widget):
         pygame.mixer.init()
         pygame.mixer.music.load('assets/BSD_alert.wav')
         # self.right_led = BlinkLED()
+
+    def get_objects(self, *args):
+        if not self.app_window.left_object_detector.empty():
+            print('Detected: ', self.app_window.left_object_detector.get(block=False))
+        else:
+            print('Got nothing!')
 
     def _sound_auditory_alert(self, dt):
         if self.monitor_screen is None or not self.monitor_screen.system_status:

@@ -4,11 +4,13 @@ import cv2
 import numpy as np
 from threading import Thread
 import importlib.util
+
 pkg = importlib.util.find_spec('tflite_runtime')
 if pkg:
     from tflite_runtime.interpreter import Interpreter
 else:
     from tensorflow.lite.python.interpreter import Interpreter
+
 
 class VideoStream:
     """Camera object that controls video streaming from the Picamera"""
@@ -122,7 +124,7 @@ class ObjectDetectionModel:
 
             # Retrieve detection results
             classes = self.interpreter.get_tensor(output_details[1]['index'])[0]  # Class index of detected objects
-            scores =self. interpreter.get_tensor(output_details[2]['index'])[0]  # Confidence of detected objects
+            scores = self.interpreter.get_tensor(output_details[2]['index'])[0]  # Confidence of detected objects
 
             # Loop over all detections and draw detection box if confidence is above minimum threshold
             display_str = []
@@ -130,7 +132,7 @@ class ObjectDetectionModel:
                 if (scores[i] > min_conf_threshold) and (scores[i] <= 1.0):
                     # Draw label
                     object_name = labels[int(classes[i])]  # Look up object name from "labels" array using class index
-                    label = '%s: %d%%' % (object_name, int(scores[i] * 100))  # Example: 'person: 72%'
+                    label = {'name': object_name, 'score': int(scores[i] * 100)}
                     display_str.append(label)
 
             if q:
