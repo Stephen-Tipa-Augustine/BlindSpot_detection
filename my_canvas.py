@@ -6,7 +6,7 @@ from kivymd.uix.label import MDLabel
 from BSDS_firmware.blink_led import BlinkLED
 from BSDS_firmware.distant_manager import DistantManager
 from kivy.uix.widget import Widget
-from kivy.properties import ObjectProperty, ListProperty, NumericProperty
+from kivy.properties import ObjectProperty, ListProperty, NumericProperty, DictProperty
 from kivy.clock import Clock
 from BSDS_firmware.helpers import ThreadManager
 import pygame
@@ -32,6 +32,13 @@ class BlindSpotObject(Widget):
 class CanvasDrawing(Widget):
     monitor_screen = ObjectProperty(None)
     app_window = ObjectProperty()
+    object_identity = DictProperty(
+    {
+            'left': 'shield-alert-outline',
+            'bottom': 'shield-alert-outline',
+            'right': 'shield-alert-outline',
+            'top': 'shield-alert-outline',
+        })
     widget_width = NumericProperty(0)
     widget_height = NumericProperty(0)
     widget_center_x = NumericProperty(0)
@@ -76,12 +83,6 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
-        self.object_identity = {
-            'left': 'shield-alert-outline',
-            'bottom': 'shield-alert-outline',
-            'right': 'shield-alert-outline',
-            'top': 'shield-alert-outline',
-        }
 
         # initializing sensors
         self.left_led = None
@@ -101,6 +102,7 @@ class CanvasDrawing(Widget):
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
+        Clock.schedule_interval(self.get_objects, 2)
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -116,8 +118,6 @@ class CanvasDrawing(Widget):
             objects = self.app_window.left_object_detector.get(block=False)
             if len(objects) != 0:
                 self.object_identity['right'] = objects[0]
-        else:
-            print('Got nothing!')
 
     def _sound_auditory_alert(self, dt):
         if self.monitor_screen is None or not self.monitor_screen.system_status:

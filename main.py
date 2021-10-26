@@ -96,19 +96,12 @@ class MonitorScreen(ScrollView):
         # initialize accelerometer "MPU6050"
         self.motion_queue = queue.Queue()
         Clock.schedule_once(self.initialize_accelerometer, 5)
-        Clock.schedule_interval(self.get_objects, 2)
         self.mode = 'standby'
         pygame.mixer.init()
 
     def initialize_accelerometer(self, *args):
         threading.Thread(target=self.accelerometer_process, args=(self.motion_queue,), daemon=True).start()
         Clock.schedule_interval(self.detect_motion, 2)
-
-    def get_objects(self, *args):
-        if not self.app_window.left_object_detector.empty():
-            print('Detected: ', self.app_window.left_object_detector.get(block=False))
-        else:
-            print('Got nothing!')
 
     @staticmethod
     def accelerometer_process(q):
@@ -172,7 +165,7 @@ class BSDSApp(MDApp):
         Window.allow_screensaver = True
 
         screen = Builder.load_file('root.kv')
-        Clock.schedule_once(self.initialize_object_detectors, 1)
+        Clock.schedule_once(self.initialize_object_detectors)
 
         return screen
 

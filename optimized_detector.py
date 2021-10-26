@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from threading import Thread
 import importlib.util
+import time
 
 pkg = importlib.util.find_spec('tflite_runtime')
 if pkg:
@@ -145,8 +146,7 @@ class ObjectDetectionModel:
             if q:
                 q.queue.clear()
                 q.put(display_str)
-            else:
-                print('Detected: ', display_str)
+            time.sleep(1)
 
     def cleanup(self):
         if self.videostream:
