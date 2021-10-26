@@ -83,15 +83,6 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
-        self.monitor_screen.category_based_numbers = {
-            'Bus': 0,
-            'Bike': 0,
-            'Human': 0,
-            'Unknown': 0,
-        }
-        self.monitor_screen.detected_objects = []
-        self.monitor_screen.position_of_detected_objects = []
-        self.monitor_screen.number_of_detected_objects = 0
 
         # initializing sensors
         self.left_led = None
@@ -127,6 +118,8 @@ class CanvasDrawing(Widget):
             objects = self.app_window.left_object_detector.get(block=False)
             if len(objects) != 0:
                 self.object_identity['right'] = objects[0]
+            else:
+                self.object_identity['right'] = 'shield-alert-outline'
 
     def _sound_auditory_alert(self, dt):
         if self.monitor_screen is None or not self.monitor_screen.system_status:
@@ -346,6 +339,16 @@ class CanvasDrawing(Widget):
             self.create_coord()
             # creat coordinate matrix
             self.coord_matrix = self._generate_coord_matrix()
+            
+            self.monitor_screen.category_based_numbers = {
+                'Bus': 0,
+                'Bike': 0,
+                'Human': 0,
+                'Unknown': 0,
+            }
+            self.monitor_screen.detected_objects = []
+            self.monitor_screen.position_of_detected_objects = []
+            self.monitor_screen.number_of_detected_objects = 0
             return
 
         m = ThreadManager()
