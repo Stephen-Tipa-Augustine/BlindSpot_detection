@@ -83,6 +83,15 @@ class CanvasDrawing(Widget):
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
         self.boundary_image_index = 0
+        self.monitor_screen.category_based_numbers = {
+            'Bus': 0,
+            'Bike': 0,
+            'Human': 0,
+            'Unknown': 0,
+        }
+        self.monitor_screen.detected_objects = []
+        self.monitor_screen.position_of_detected_objects = []
+        self.monitor_screen.number_of_detected_objects = 0
 
         # initializing sensors
         self.left_led = None
