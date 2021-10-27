@@ -98,11 +98,11 @@ class CanvasDrawing(Widget):
 
         self.initialize_sensors()
 
-        Clock.schedule_interval(self.update_canvas, timeout=.5)
+        Clock.schedule_interval(self.update_canvas, timeout=1)
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
-        Clock.schedule_interval(self.get_objects, 2)
+        Clock.schedule_interval(self.get_objects, 1)
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -174,21 +174,21 @@ class CanvasDrawing(Widget):
         return self._coord_mapper(self.distant_manager.run())
 
     def _coord_mapper(self, data):
-        point = None
+        point = []
         for i in data:
             if data[i]:
                 if i == 'left':
                     self.left_sensor_value = data['left']
-                    point = self._coord_translator(data['left'], 'left'), data['left'][1], data['left'][0], i
+                    point.append((self._coord_translator(data['left'], 'left'), data['left'][1], data['left'][0], i))
                 elif i == 'bottom':
                     self.rear_sensor_value = data['bottom']
-                    point = self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1], data['bottom'][0], i
+                    point.append((self._coord_translator(data['bottom'], 'bottom'), data['bottom'][1], data['bottom'][0], i))
                 elif i == 'right':
                     self.right_sensor_value = data['right']
-                    point = self._coord_translator(data['right'], 'right'), data['right'][1], data['right'][0], i
+                    point.append((self._coord_translator(data['right'], 'right'), data['right'][1], data['right'][0], i))
                 elif i == 'top':
                     self.front_sensor_value = data['top']
-                    point = self._coord_translator(data['top'], 'top'), data['top'][1], data['top'][0], i
+                    point.append((self._coord_translator(data['top'], 'top'), data['top'][1], data['top'][0], i))
 
         return point
 
@@ -356,9 +356,9 @@ class CanvasDrawing(Widget):
         t.start()
         m.add_thread(t)
         m.join_threads()
-        coord = m.check_for_return_value()
+        point = m.check_for_return_value()
 
-        if coord:
+        for coord in point:
             self.add_object(kind=self.object_identity[coord[3]], center=coord[0],
                             color=self.colors[0] if coord[1] == 'in' else self.colors[1],
                             description=coord[1], num_value=coord[2], sensor_id=coord[3])
@@ -398,16 +398,19 @@ class CanvasDrawing(Widget):
         if description_count == 1 and object_info['location'] in self.danger_zone_positions:
             index = self.danger_zone_positions.index(object_info['location'])
             del self.danger_zone_positions[index]
-
-        if kind_count == 1 and self.object_kind[kind] in self.monitor_screen.detected_objects:
-            index = self.monitor_screen.detected_objects.index(self.object_kind[kind])
+            
+            
+        category_kind = self.added_objects[object_info['location']][decision[1]]['kind']
+        self.monitor_screen.category_based_numbers[category_kind] -= 1
+        
+        if self.monitor_screen.category_based_numbers[category_kind] == 0:
+            index = self.monitor_screen.detected_objects.index(category_kind)
             del self.monitor_screen.detected_objects[index]
 
         if self.added_objects[object_info['location']][decision[1]]:
             del self.added_objects[object_info['location']][decision[1]]
 
         self.monitor_screen.number_of_detected_objects -= 1
-        self.monitor_screen.category_based_numbers[self.object_kind[kind]] -= 1
         self.remove_widget(decision[-1])
 
     def _add_object(self, kind, center, color, object_info, description, sensor_id, num_value=0):

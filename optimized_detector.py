@@ -146,7 +146,7 @@ class ObjectDetectionModel:
             if q:
                 q.queue.clear()
                 q.put(display_str)
-            time.sleep(1)
+            time.sleep(.5)
 
     def cleanup(self):
         if self.videostream:
