@@ -85,7 +85,7 @@ class MonitorScreen(ScrollView):
         defaultvalue={
             'Car': 0,
             'Bike': 0,
-            'Human': 0,
+            'Person': 0,
             'Unknown': 0,
         }
     )

@@ -63,7 +63,7 @@ class Accelerometer:
         for i in difference:
             if difference[i] > 2:
                 changed_axis += 1
-        return False if changed_axis < 1 else True
+        return False if changed_axis < 3 else True
 
     def vehicle_moving(self):
         self.moving = self.detect_state(self.accel_data)

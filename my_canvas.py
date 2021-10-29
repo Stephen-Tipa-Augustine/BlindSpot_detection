@@ -78,7 +78,7 @@ class CanvasDrawing(Widget):
         self.pos_factors_x = [.1, .2, .25, .3]
         self.pos_factors_y = [.2, .3, .4, .45, .5]
         self.colors = ((1, 0, 0, .9), (0, 1, 0, .9))
-        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'Human',
+        self.object_kind = {'car': 'Car', 'motorbike': 'Bike', 'human-handsdown': 'Person',
                             'shield-alert-outline': 'Unknown'}
         self.added_objects = {'Top': [], 'Left': [], 'Bottom': [], 'Right': []}
         self.boundary_images = []
@@ -102,7 +102,7 @@ class CanvasDrawing(Widget):
         Clock.schedule_interval(self._blink_right_led, timeout=.5)
         Clock.schedule_interval(self._blink_left_led, timeout=.5)
         Clock.schedule_interval(self._sound_auditory_alert, timeout=.5)
-        Clock.schedule_interval(self.get_objects, 1)
+        Clock.schedule_interval(self.get_objects, 1.5)
 
     def initialize_sensors(self):
         self.distant_manager = DistantManager()
@@ -343,7 +343,7 @@ class CanvasDrawing(Widget):
             self.monitor_screen.category_based_numbers = {
                 'Car': 0,
                 'Bike': 0,
-                'Human': 0,
+                'Person': 0,
                 'Unknown': 0,
             }
             self.monitor_screen.detected_objects = []
